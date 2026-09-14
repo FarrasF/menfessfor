@@ -4,51 +4,51 @@
    ============================================ */
 
 /* --- Google Fonts --- */
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap');
 
 /* --- CSS Variables --- */
 :root {
-  /* Colors — Base */
-  --color-primary: #E11D48;
-  --color-primary-light: #FB7185;
-  --color-primary-dark: #BE123C;
-  --color-cta: #2563EB;
-  --color-cta-light: #60A5FA;
-  --color-cta-dark: #1D4ED8;
+  /* Colors — Base (Cool Teal palette) */
+  --color-primary: #2B7A8A;
+  --color-primary-light: #6AACB9;
+  --color-primary-dark: #1E5F6E;
+  --color-cta: #164E5C;
+  --color-cta-light: #2B7A8A;
+  --color-cta-dark: #0E3740;
 
   /* Colors — Background & Surface */
-  --color-bg: #FFF7ED;
+  --color-bg: #EDF6F9;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #FEF3C7;
+  --color-surface-alt: #D6EFF6;
 
   /* Colors — Text */
-  --color-text: #1E1B18;
-  --color-text-muted: #78716C;
+  --color-text: #132D34;
+  --color-text-muted: #4D7E8A;
   --color-text-inverse: #FFFFFF;
 
   /* Colors — Border */
-  --color-border: #1E1B18;
-  --color-border-light: #D6D3D1;
+  --color-border: #164E5C;
+  --color-border-light: #A1D1DF;
 
   /* Colors — Categories */
-  --color-cat-confess: #E11D48;
-  --color-cat-confess-bg: #FFF1F2;
-  --color-cat-curhat: #7C3AED;
-  --color-cat-curhat-bg: #F5F3FF;
-  --color-cat-akademik: #2563EB;
-  --color-cat-akademik-bg: #EFF6FF;
-  --color-cat-random: #F59E0B;
-  --color-cat-random-bg: #FFFBEB;
+  --color-cat-confess: #D4566A;
+  --color-cat-confess-bg: #FCEEF1;
+  --color-cat-curhat: #6B5CA5;
+  --color-cat-curhat-bg: #F0EDF8;
+  --color-cat-akademik: #2B7A8A;
+  --color-cat-akademik-bg: #E1F2F6;
+  --color-cat-random: #C98B2E;
+  --color-cat-random-bg: #FDF4E6;
 
   /* Colors — States */
-  --color-success: #16A34A;
-  --color-warning: #F59E0B;
-  --color-error: #DC2626;
-  --color-info: #2563EB;
+  --color-success: #2D8F5C;
+  --color-warning: #C98B2E;
+  --color-error: #C94444;
+  --color-info: #2B7A8A;
 
   /* Typography */
-  --font-heading: 'Fredoka', sans-serif;
-  --font-body: 'Nunito', sans-serif;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Work Sans', sans-serif;
 
   /* Font Sizes */
   --text-xs: 0.75rem;
