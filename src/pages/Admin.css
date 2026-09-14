@@ -1,64 +1,168 @@
-.admin-placeholder {
-  display: flex;
-  justify-content: center;
-  padding-top: var(--space-10);
+/* ============================================
+   GitHub Style Admin Moderation Page
+   ============================================ */
+
+.admin-header {
+  margin-bottom: var(--space-4);
 }
 
-.admin-placeholder__card {
-  max-width: 520px;
-  padding: var(--space-10);
-  text-align: center;
+.admin-header__title-wrap {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
-.admin-placeholder__card:hover {
-  transform: none;
-  box-shadow: var(--shadow-clay);
-}
-
-.admin-placeholder__icon {
-  margin-bottom: var(--space-2);
-}
-
-.admin-placeholder__title {
+.admin-header__title {
   font-size: var(--text-2xl);
+  font-weight: 600;
 }
 
-.admin-placeholder__text {
-  color: var(--color-text-muted);
-  line-height: 1.7;
+.admin-header__desc {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
 }
 
-.admin-placeholder__features {
+/* GitHub Tab Nav */
+.admin-tabs {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--space-4);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-  border: 2px solid var(--color-border-light);
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: var(--space-4);
 }
 
-.admin-placeholder__feature {
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  margin-bottom: -1px;
+}
+
+.admin-tab:hover {
+  color: var(--color-fg-default);
+}
+
+.admin-tab--active {
+  color: var(--color-fg-default);
+  font-weight: 600;
+  border-bottom-color: #fd8c73;
+}
+
+.admin-tab__counter {
+  display: inline-block;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-canvas-subtle);
+  color: var(--color-fg-muted);
+  border: 1px solid var(--color-border-default);
+}
+
+/* Queue Box */
+.admin-queue-box {
+  margin-bottom: var(--space-4);
+}
+
+.admin-queue-header {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text-muted);
+  gap: var(--space-2);
 }
 
-@media (max-width: 480px) {
-  .admin-placeholder__card {
-    padding: var(--space-6);
+.admin-queue-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  background-color: var(--color-canvas-subtle);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-default);
+}
+
+.admin-queue-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-default);
+  background-color: var(--color-canvas-default);
+  transition: background-color var(--transition-fast);
+}
+
+.admin-queue-item:last-child {
+  border-bottom: none;
+}
+
+.admin-queue-item:hover {
+  background-color: var(--color-canvas-subtle);
+}
+
+.admin-queue-item__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-queue-item__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-queue-item__id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+
+.admin-queue-item__time {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+
+.admin-queue-item__preview {
+  font-size: var(--text-sm);
+  color: var(--color-fg-default);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.admin-queue-item__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.admin-footer {
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .admin-queue-item {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .admin-placeholder__title {
-    font-size: var(--text-xl);
+  .admin-queue-item__actions {
+    align-self: flex-end;
   }
 }

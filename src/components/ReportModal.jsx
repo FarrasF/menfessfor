@@ -2,17 +2,13 @@ import { useState } from 'react';
 import './ReportModal.css';
 
 /**
- * ReportModal — Placeholder component for reporting menfess or comments.
- *
- * This component will be fully implemented when the Supabase
- * integration is ready. For now it provides the UI shell.
+ * ReportModal — Modal for reporting menfess or comments in GitHub Dialog style.
  */
-
 const REPORT_REASONS = [
-  'Konten tidak pantas',
-  'Spam',
-  'Ujaran kebencian',
-  'Informasi palsu',
+  'Konten tidak pantas atau pornografi',
+  'Spam atau iklan terselubung',
+  'Ujaran kebencian atau pelecehan',
+  'Informasi palsu / disinformasi',
   'Lainnya',
 ];
 
@@ -25,7 +21,6 @@ function ReportModal({ isOpen, onClose, targetType = 'menfess', targetId }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Future: send report to Supabase
     console.log('Report submitted:', { targetType, targetId, selectedReason, additionalInfo });
     setSubmitted(true);
     setTimeout(() => {
@@ -33,67 +28,85 @@ function ReportModal({ isOpen, onClose, targetType = 'menfess', targetId }) {
       setSelectedReason('');
       setAdditionalInfo('');
       onClose();
-    }, 2000);
+    }, 1800);
   };
 
   return (
-    <div className="report-modal__overlay" onClick={onClose}>
+    <div className="gh-dialog-backdrop" onClick={onClose}>
       <div
-        className="report-modal clay-card"
+        className="gh-dialog"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={`Laporkan ${targetType}`}
+        aria-labelledby="report-dialog-title"
       >
         {submitted ? (
-          <div className="report-modal__success">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
+          <div className="gh-dialog__success">
+            <svg width="32" height="32" viewBox="0 0 16 16" fill="var(--color-success-fg)" aria-hidden="true">
+              <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm3.78-9.72a.751.751 0 0 0-.018-1.042.751.751 0 0 0-1.042-.018L6.75 9.19 5.28 7.72a.751.751 0 0 0-1.042.018.751.751 0 0 0 .018 1.042l2 2a.75.75 0 0 0 1.06 0Z" />
             </svg>
-            <p>Laporan terkirim!</p>
+            <p className="gh-dialog__success-text">Laporan berhasil dikirim ke antrean moderasi.</p>
           </div>
         ) : (
           <>
-            <div className="report-modal__header">
-              <h3>Laporkan {targetType === 'menfess' ? 'Menfess' : 'Komentar'}</h3>
-              <button className="report-modal__close" onClick={onClose} aria-label="Tutup">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+            <div className="gh-dialog__header">
+              <h2 id="report-dialog-title" className="gh-dialog__title">
+                Laporkan {targetType === 'menfess' ? 'Menfess' : 'Komentar'}
+              </h2>
+              <button className="gh-dialog__close" onClick={onClose} aria-label="Tutup dialog">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
                 </svg>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="report-modal__reasons">
-                {REPORT_REASONS.map((reason) => (
-                  <label key={reason} className="report-modal__reason">
-                    <input
-                      type="radio"
-                      name="report-reason"
-                      value={reason}
-                      checked={selectedReason === reason}
-                      onChange={(e) => setSelectedReason(e.target.value)}
-                      required
-                    />
-                    <span className="report-modal__reason-label">{reason}</span>
+            <form onSubmit={handleSubmit} className="gh-dialog__form">
+              <div className="gh-dialog__body">
+                <div className="gh-dialog__reasons">
+                  <span className="gh-dialog__section-label">Pilih alasan pelaporan:</span>
+                  {REPORT_REASONS.map((reason) => (
+                    <label key={reason} className="gh-dialog__reason-option">
+                      <input
+                        type="radio"
+                        name="report-reason"
+                        value={reason}
+                        checked={selectedReason === reason}
+                        onChange={(e) => setSelectedReason(e.target.value)}
+                        required
+                      />
+                      <span>{reason}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="gh-dialog__field">
+                  <label htmlFor="report-additional-info" className="gh-dialog__section-label">
+                    Detail tambahan (opsional)
                   </label>
-                ))}
+                  <textarea
+                    id="report-additional-info"
+                    className="gh-input gh-dialog__textarea"
+                    placeholder="Bantu moderator memahami konteks masalah ini..."
+                    value={additionalInfo}
+                    onChange={(e) => setAdditionalInfo(e.target.value)}
+                    rows={3}
+                    maxLength={300}
+                  />
+                </div>
               </div>
 
-              <textarea
-                className="report-modal__textarea clay-input"
-                placeholder="Informasi tambahan (opsional)"
-                value={additionalInfo}
-                onChange={(e) => setAdditionalInfo(e.target.value)}
-                rows={3}
-                maxLength={300}
-              />
-
-              <button type="submit" className="clay-button clay-button--primary report-modal__submit">
-                Kirim Laporan
-              </button>
+              <div className="gh-dialog__footer">
+                <button type="button" className="gh-btn" onClick={onClose}>
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="gh-btn gh-btn-danger"
+                  disabled={!selectedReason}
+                >
+                  Kirim Laporan
+                </button>
+              </div>
             </form>
           </>
         )}

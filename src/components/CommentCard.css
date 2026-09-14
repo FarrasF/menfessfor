@@ -1,34 +1,73 @@
-.comment-card {
-  padding: var(--space-4);
-  border: 2px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+/* ============================================
+   GitHub Issue Comment Box
+   ============================================ */
+
+.gh-timeline-comment {
+  position: relative;
+  margin-bottom: var(--space-4);
 }
 
-.comment-card__header {
+.gh-comment-box {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-canvas-default);
+}
+
+.gh-comment-box__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-2);
+  padding: 8px 16px;
+  background-color: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-default);
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
 }
 
-.comment-card__anon {
+.gh-comment-box__author {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  font-family: var(--font-heading);
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gh-comment-box__name {
   font-weight: 600;
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
+  color: var(--color-fg-default);
 }
 
-.comment-card__time {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
+.gh-comment-box__id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-fg-muted);
 }
 
-.comment-card__content {
+.gh-comment-box__action {
+  color: var(--color-fg-muted);
+}
+
+.gh-comment-box__report-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: var(--color-fg-subtle);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.gh-comment-box__report-btn:hover {
+  color: var(--color-danger-fg);
+  background-color: var(--color-danger-subtle);
+}
+
+.gh-comment-box__body {
+  padding: 16px;
+}
+
+.gh-comment-box__text {
   font-size: var(--text-sm);
   line-height: 1.6;
-  color: var(--color-text);
+  color: var(--color-fg-default);
+  word-break: break-word;
 }

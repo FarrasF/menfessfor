@@ -1,102 +1,111 @@
 /* ============================================
-   MENFESSFOR — Design System
-   Claymorphism + Block-based + Vibrant
+   MENFESSFOR — GitHub Primer Design System
+   Clean, flat, high-contrast, developer-centric
    ============================================ */
 
-/* --- Google Fonts --- */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap');
-
-/* --- CSS Variables --- */
 :root {
-  /* Colors — Base (Cool Teal palette) */
-  --color-primary: #2B7A8A;
-  --color-primary-light: #6AACB9;
-  --color-primary-dark: #1E5F6E;
-  --color-cta: #164E5C;
-  --color-cta-light: #2B7A8A;
-  --color-cta-dark: #0E3740;
+  /* GitHub Primer Colors - Light Mode */
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #f6f8fa;
+  --color-canvas-inset: #f6f8fa;
+  
+  --color-border-default: #d0d7de;
+  --color-border-muted: #d8dee4;
+  --color-border-subtle: rgba(31, 35, 40, 0.15);
 
-  /* Colors — Background & Surface */
-  --color-bg: #EDF6F9;
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #D6EFF6;
+  --color-fg-default: #1f2328;
+  --color-fg-muted: #656d76;
+  --color-fg-subtle: #8c959f;
+  --color-fg-on-emphasis: #ffffff;
 
-  /* Colors — Text */
-  --color-text: #132D34;
-  --color-text-muted: #4D7E8A;
-  --color-text-inverse: #FFFFFF;
+  /* Accent / Link */
+  --color-accent-fg: #0969da;
+  --color-accent-emphasis: #0969da;
+  --color-accent-subtle: #ddf4ff;
 
-  /* Colors — Border */
-  --color-border: #164E5C;
-  --color-border-light: #A1D1DF;
+  /* Primary Button (GitHub Green) */
+  --color-success-fg: #1a7f37;
+  --color-success-emphasis: #1f883d;
+  --color-success-hover: #1a7f37;
+  --color-success-subtle: #dafbe1;
 
-  /* Colors — Categories */
-  --color-cat-confess: #D4566A;
-  --color-cat-confess-bg: #FCEEF1;
-  --color-cat-curhat: #6B5CA5;
-  --color-cat-curhat-bg: #F0EDF8;
-  --color-cat-akademik: #2B7A8A;
-  --color-cat-akademik-bg: #E1F2F6;
-  --color-cat-random: #C98B2E;
-  --color-cat-random-bg: #FDF4E6;
+  /* Danger Button / State */
+  --color-danger-fg: #cf222e;
+  --color-danger-emphasis: #cf222e;
+  --color-danger-hover: #a40e26;
+  --color-danger-subtle: #ffebe9;
 
-  /* Colors — States */
-  --color-success: #2D8F5C;
-  --color-warning: #C98B2E;
-  --color-error: #C94444;
-  --color-info: #2B7A8A;
+  /* Warning / State */
+  --color-attention-fg: #9a6700;
+  --color-attention-emphasis: #bf8700;
+  --color-attention-subtle: #fff8c5;
+
+  /* Header Light Palette (Matching Homepage / Modern GitHub Light Header) */
+  --color-header-bg: #f6f8fa;
+  --color-header-text: #656d76;
+  --color-header-text-hover: #1f2328;
+  --color-header-border: #d0d7de;
+
+  /* GitHub Issue Category Labels */
+  --color-label-confess-text: #cf222e;
+  --color-label-confess-bg: #ffebe9;
+  --color-label-confess-border: rgba(255, 129, 130, 0.4);
+
+  --color-label-curhat-text: #8250df;
+  --color-label-curhat-bg: #fbefff;
+  --color-label-curhat-border: rgba(194, 151, 248, 0.4);
+
+  --color-label-akademik-text: #0969da;
+  --color-label-akademik-bg: #ddf4ff;
+  --color-label-akademik-border: rgba(84, 174, 255, 0.4);
+
+  --color-label-random-text: #9a6700;
+  --color-label-random-bg: #fff8c5;
+  --color-label-random-border: rgba(212, 167, 44, 0.4);
 
   /* Typography */
-  --font-heading: 'Space Grotesk', sans-serif;
-  --font-body: 'Work Sans', sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* Font Sizes */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
+  --text-xs: 0.75rem;     /* 12px */
+  --text-sm: 0.875rem;    /* 14px */
+  --text-base: 1rem;      /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.25rem;     /* 20px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-3xl: 2rem;       /* 32px */
 
   /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
 
   /* Border Radius */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
-  --radius-full: 50px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
 
-  /* Border */
-  --border-thin: 2px solid var(--color-border);
-  --border-thick: 3px solid var(--color-border);
-
-  /* Shadows — Clay */
-  --shadow-clay: 6px 6px 0px var(--color-border);
-  --shadow-clay-sm: 4px 4px 0px var(--color-border);
-  --shadow-clay-hover: 2px 2px 0px var(--color-border);
-  --shadow-clay-active: 1px 1px 0px var(--color-border);
+  /* Shadows (Subtle Primer shadows) */
+  --shadow-btn: 0 1px 0 rgba(31, 35, 40, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --shadow-btn-primary: 0 1px 0 rgba(31, 35, 40, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-card: 0 1px 3px rgba(31, 35, 40, 0.08);
+  --shadow-overlay: 0 8px 24px rgba(140, 149, 159, 0.2);
 
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
+  --transition-fast: 120ms cubic-bezier(0.3, 0, 0.5, 1);
 
   /* Layout */
-  --max-width: 1100px;
-  --navbar-height: 72px;
+  --max-width: 1040px;
+  --navbar-height: 64px;
 }
 
 /* --- Reset & Base --- */
@@ -116,9 +125,9 @@ html {
 body {
   font-family: var(--font-body);
   font-weight: 400;
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  line-height: 1.6;
+  color: var(--color-fg-default);
+  background-color: var(--color-canvas-subtle);
+  line-height: 1.5;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -127,12 +136,18 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 600;
+  color: var(--color-fg-default);
   line-height: 1.3;
 }
 
 a {
   text-decoration: none;
-  color: inherit;
+  color: var(--color-accent-fg);
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 button {
@@ -145,7 +160,12 @@ button {
 
 input, textarea, select {
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
+  color: var(--color-fg-default);
+}
+
+code, kbd, pre, samp {
+  font-family: var(--font-mono);
 }
 
 ul, ol {
@@ -162,179 +182,212 @@ img {
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 var(--space-6);
+  padding: 0 var(--space-4);
 }
 
 .page {
-  padding-top: calc(var(--navbar-height) + var(--space-8));
-  padding-bottom: var(--space-16);
-  min-height: 100vh;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-12);
+  min-height: calc(100vh - var(--navbar-height));
 }
 
-/* --- Clay Components --- */
-.clay-card {
-  background: var(--color-surface);
-  border: 3px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-clay);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+/* --- GitHub Box (Card / Container) --- */
+.gh-box {
+  background-color: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
-.clay-card:hover {
-  transform: translate(2px, 2px);
-  box-shadow: var(--shadow-clay-hover);
+.gh-box-header {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-fg-default);
 }
 
-.clay-card:active {
-  transform: translate(4px, 4px);
-  box-shadow: var(--shadow-clay-active);
+.gh-box-body {
+  padding: var(--space-4);
 }
 
-.clay-button {
+/* --- GitHub Buttons --- */
+.gh-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-6);
-  border: 3px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-clay-sm);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: var(--text-base);
+  padding: 5px 12px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  vertical-align: middle;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   user-select: none;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-canvas-subtle);
+  color: var(--color-fg-default);
+  box-shadow: var(--shadow-btn);
+  transition: var(--transition-fast);
+  text-decoration: none;
 }
 
-.clay-button:hover {
-  transform: translate(2px, 2px);
-  box-shadow: var(--shadow-clay-active);
+.gh-btn:hover {
+  background-color: #f3f4f6;
+  border-color: var(--color-border-subtle);
+  text-decoration: none;
 }
 
-.clay-button:active {
-  transform: translate(3px, 3px);
-  box-shadow: none;
+.gh-btn:active {
+  background-color: #ebecf0;
+  box-shadow: inset 0 1px 0 rgba(31, 35, 40, 0.2);
 }
 
-.clay-button--primary {
-  background-color: var(--color-primary);
-  color: var(--color-text-inverse);
+.gh-btn-primary {
+  color: #ffffff;
+  background-color: var(--color-success-emphasis);
+  border-color: rgba(31, 35, 40, 0.15);
+  box-shadow: var(--shadow-btn-primary);
 }
 
-.clay-button--cta {
-  background-color: var(--color-cta);
-  color: var(--color-text-inverse);
+.gh-btn-primary:hover {
+  background-color: var(--color-success-hover);
+  border-color: rgba(31, 35, 40, 0.15);
+  color: #ffffff;
 }
 
-.clay-button--ghost {
-  background-color: var(--color-surface);
-  color: var(--color-text);
+.gh-btn-primary:active {
+  background-color: #166e30;
 }
 
-.clay-pill {
+.gh-btn-primary:disabled {
+  background-color: #94d3a2;
+  border-color: transparent;
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.gh-btn-danger {
+  color: var(--color-danger-fg);
+  background-color: var(--color-canvas-subtle);
+}
+
+.gh-btn-danger:hover {
+  color: #ffffff;
+  background-color: var(--color-danger-emphasis);
+  border-color: rgba(31, 35, 40, 0.15);
+}
+
+.gh-btn-sm {
+  padding: 3px 8px;
+  font-size: var(--text-xs);
+}
+
+/* --- GitHub Labels (Issue badges) --- */
+.gh-label {
   display: inline-flex;
   align-items: center;
-  padding: var(--space-1) var(--space-4);
-  border: 2px solid var(--color-border);
+  padding: 0 7px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
   border-radius: var(--radius-full);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  user-select: none;
+  border: 1px solid transparent;
+  font-family: var(--font-body);
 }
 
-.clay-pill:hover {
-  transform: translate(1px, 1px);
+.gh-label-confess {
+  background-color: var(--color-label-confess-bg);
+  color: var(--color-label-confess-text);
+  border-color: var(--color-label-confess-border);
 }
 
-.clay-pill--active {
-  box-shadow: 3px 3px 0px var(--color-border);
+.gh-label-curhat {
+  background-color: var(--color-label-curhat-bg);
+  color: var(--color-label-curhat-text);
+  border-color: var(--color-label-curhat-border);
 }
 
-.clay-input {
+.gh-label-akademik {
+  background-color: var(--color-label-akademik-bg);
+  color: var(--color-label-akademik-text);
+  border-color: var(--color-label-akademik-border);
+}
+
+.gh-label-random {
+  background-color: var(--color-label-random-bg);
+  color: var(--color-label-random-text);
+  border-color: var(--color-label-random-border);
+}
+
+/* --- GitHub State Badges (Open, Closed, Pending) --- */
+.gh-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  line-height: 18px;
+}
+
+.gh-state-open {
+  background-color: var(--color-success-emphasis);
+  color: #ffffff;
+}
+
+.gh-state-closed {
+  background-color: var(--color-danger-emphasis);
+  color: #ffffff;
+}
+
+.gh-state-pending {
+  background-color: var(--color-attention-emphasis);
+  color: #ffffff;
+}
+
+/* --- GitHub Form Inputs --- */
+.gh-input {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: 3px solid var(--color-border);
+  padding: 5px 12px;
+  font-size: var(--text-sm);
+  line-height: 20px;
+  color: var(--color-fg-default);
+  background-color: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
-  font-size: var(--text-base);
-  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgba(208, 215, 222, 0.2);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
-  transition: box-shadow var(--transition-fast);
 }
 
-.clay-input:focus {
-  box-shadow: var(--shadow-clay-sm);
+.gh-input:focus {
+  border-color: var(--color-accent-fg);
+  box-shadow: inset 0 0 0 1px var(--color-accent-fg);
 }
 
-.clay-input::placeholder {
-  color: var(--color-text-muted);
+.gh-input::placeholder {
+  color: var(--color-fg-subtle);
 }
 
-/* --- Category Colors --- */
-.category-confess {
-  background-color: var(--color-cat-confess-bg);
-  color: var(--color-cat-confess);
-}
-
-.category-curhat {
-  background-color: var(--color-cat-curhat-bg);
-  color: var(--color-cat-curhat);
-}
-
-.category-akademik {
-  background-color: var(--color-cat-akademik-bg);
-  color: var(--color-cat-akademik);
-}
-
-.category-random {
-  background-color: var(--color-cat-random-bg);
-  color: var(--color-cat-random);
-}
-
-/* --- Accessibility --- */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* Focus visible for keyboard navigation */
+/* --- Accessibility & Focus --- */
 :focus-visible {
-  outline: 3px solid var(--color-cta);
+  outline: 2px solid var(--color-accent-fg);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
-/* --- Responsive --- */
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-  :root {
-    --navbar-height: 64px;
-  }
-
-  .container {
-    padding: 0 var(--space-4);
-  }
-
   .page {
-    padding-top: calc(var(--navbar-height) + var(--space-6));
-  }
-}
-
-@media (max-width: 480px) {
-  html {
-    font-size: 15px;
-  }
-
-  .container {
-    padding: 0 var(--space-3);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-8);
   }
 }
