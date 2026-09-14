@@ -1,18 +1,9 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import MenfessCard from '../components/MenfessCard';
-import CategoryFilter from '../components/CategoryFilter';
 import { dummyMenfess } from '../data/dummyData';
 import './Home.css';
 
 function Home() {
-  const [activeCategory, setActiveCategory] = useState('Semua');
-
-  const filteredMenfess =
-    activeCategory === 'Semua'
-      ? dummyMenfess
-      : dummyMenfess.filter((m) => m.category === activeCategory);
-
   return (
     <main className="page">
       <div className="container">
@@ -46,29 +37,14 @@ function Home() {
         <section className="home-feed">
           <div className="home-feed__header">
             <h2 className="home-feed__title">Menfess Terbaru</h2>
-            <span className="home-feed__count">{filteredMenfess.length} menfess</span>
+            <span className="home-feed__count">{dummyMenfess.length} menfess</span>
           </div>
 
-          <CategoryFilter
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-          />
-
-          {filteredMenfess.length > 0 ? (
-            <div className="home-feed__grid">
-              {filteredMenfess.map((menfess) => (
-                <MenfessCard key={menfess.id} {...menfess} />
-              ))}
-            </div>
-          ) : (
-            <div className="home-feed__empty clay-card">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <p>Belum ada menfess di kategori ini.</p>
-            </div>
-          )}
+          <div className="home-feed__grid">
+            {dummyMenfess.map((menfess) => (
+              <MenfessCard key={menfess.id} {...menfess} />
+            ))}
+          </div>
         </section>
       </div>
     </main>
@@ -76,3 +52,4 @@ function Home() {
 }
 
 export default Home;
+
