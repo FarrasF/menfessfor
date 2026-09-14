@@ -1,0 +1,101 @@
+.report-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: var(--space-4);
+}
+
+.report-modal {
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-6);
+}
+
+.report-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.report-modal__header h3 {
+  font-size: var(--text-lg);
+}
+
+.report-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.report-modal__close:hover {
+  background: var(--color-bg);
+}
+
+.report-modal__reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.report-modal__reason {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.report-modal__reason:hover {
+  background: var(--color-bg);
+}
+
+.report-modal__reason input[type='radio'] {
+  accent-color: var(--color-primary);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.report-modal__reason-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.report-modal__textarea {
+  margin-bottom: var(--space-4);
+  resize: vertical;
+  min-height: 70px;
+}
+
+.report-modal__submit {
+  width: 100%;
+}
+
+.report-modal__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+.report-modal__success p {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  color: var(--color-success);
+}

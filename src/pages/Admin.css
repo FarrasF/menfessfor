@@ -1,0 +1,64 @@
+.admin-placeholder {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-10);
+}
+
+.admin-placeholder__card {
+  max-width: 520px;
+  padding: var(--space-10);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.admin-placeholder__card:hover {
+  transform: none;
+  box-shadow: var(--shadow-clay);
+}
+
+.admin-placeholder__icon {
+  margin-bottom: var(--space-2);
+}
+
+.admin-placeholder__title {
+  font-size: var(--text-2xl);
+}
+
+.admin-placeholder__text {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+.admin-placeholder__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border-light);
+}
+
+.admin-placeholder__feature {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 480px) {
+  .admin-placeholder__card {
+    padding: var(--space-6);
+  }
+
+  .admin-placeholder__title {
+    font-size: var(--text-xl);
+  }
+}

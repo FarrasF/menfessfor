@@ -1,0 +1,41 @@
+.category-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.category-filter__pill {
+  white-space: nowrap;
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.category-filter__pill[aria-selected='false'] {
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.category-filter__pill[aria-selected='true'] {
+  font-weight: 700;
+}
+
+/* Semua pill default */
+.category-filter__pill[aria-selected='true']:not([class*='category-']) {
+  background-color: var(--color-text);
+  color: var(--color-text-inverse);
+}
+
+@media (max-width: 480px) {
+  .category-filter {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .category-filter::-webkit-scrollbar {
+    display: none;
+  }
+}
