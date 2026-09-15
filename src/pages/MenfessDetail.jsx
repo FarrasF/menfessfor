@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import CommentCard from '../components/CommentCard';
 import ReportModal from '../components/ReportModal';
 import { dummyMenfess, dummyComments } from '../data/dummyData';
+import { supabase } from '../lib/supabase';
 import './MenfessDetail.css';
 
 function getCategoryLabelClass(category) {
@@ -29,14 +30,137 @@ function formatDetailTime(dateString) {
 function MenfessDetail() {
   const { id } = useParams();
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [commentText, setCommentText] = useState('');
+  const [anonymousId, setAnonymousId] = useState('');
   const [reportOpen, setReportOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState({ type: 'menfess', id: null });
 
-  const menfess = dummyMenfess.find((m) => m.id === Number(id));
-  const [commentsList, setCommentsList] = useState(
-    dummyComments.filter((c) => c.menfess_id === Number(id))
-  );
+  const [menfess, setMenfess] = useState(null);
+  const [commentsList, setCommentsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMenfess();
+    fetchComments();
+    fetchLikes();
+  }, [id]);
+
+  function getAnonymousId() {
+    let anonId = localStorage.getItem('anonymous_id');
+
+    if (!anonId) {
+      anonId = crypto.randomUUID();
+      localStorage.setItem('anonymous_id', anonId);
+    }
+
+    return anonId;
+  }
+
+  async function fetchLikes() {
+    const { data, error } = await supabase
+      .from('likes')
+      .select('id, anonymous_id')
+      .eq('menfess_id', id);
+
+    if (error) {
+      console.error('Gagal mengambil likes:', error);
+      return;
+    }
+
+    setLikeCount(data.length);
+
+    const currentAnonymousId = getAnonymousId();
+    setAnonymousId(currentAnonymousId);
+
+    const userHasLiked = data.some(
+      (like) => like.anonymous_id === currentAnonymousId
+    );
+
+    setLiked(userHasLiked);
+  }
+
+  async function handleLike() {
+    const currentAnonymousId = anonymousId || getAnonymousId();
+
+    if (liked) {
+      // Unlike
+      const { error } = await supabase.rpc('remove_like', {
+        p_menfess_id: Number(id),
+        p_anonymous_id: currentAnonymousId,
+      });
+
+      if (error) {
+        console.error('Gagal unlike:', error);
+        alert('Gagal membatalkan like.');
+        return;
+      }
+
+      setLiked(false);
+      setLikeCount((current) => Math.max(0, current - 1));
+    } else {
+      // Like
+      const { error } = await supabase
+        .from('likes')
+        .insert([
+          {
+            menfess_id: Number(id),
+            anonymous_id: currentAnonymousId,
+          },
+        ]);
+
+      if (error) {
+        console.error('Gagal like:', error);
+        alert('Gagal memberikan like.');
+        return;
+      }
+
+      setLiked(true);
+      setLikeCount((current) => current + 1);
+    }
+  }
+
+  async function fetchMenfess() {
+    const { data, error } = await supabase
+      .from('menfess')
+      .select('*')
+      .eq('id', id)
+      .eq('status', 'approved')
+      .single();
+
+    if (error) {
+      console.error('Gagal mengambil menfess:', error);
+    } else {
+      setMenfess(data);
+    }
+
+    setLoading(false);
+  }
+
+  async function fetchComments() {
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*')
+      .eq('menfess_id', id)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Gagal mengambil komentar:', error);
+      return;
+    }
+
+    setCommentsList(data);
+  }
+
+  if (loading) {
+    return (
+      <main className="page">
+        <div className="container container--sm">
+          <p>Memuat menfess...</p>
+        </div>
+      </main>
+    );
+  }
 
   if (!menfess) {
     return (
@@ -59,18 +183,32 @@ function MenfessDetail() {
 
   const anonId = String(menfess.id).padStart(3, '0');
 
-  const handleCommentSubmit = (e) => {
+  const handleCommentSubmit = async (e) => {
     e.preventDefault();
+
     if (!commentText.trim()) return;
 
-    const newComment = {
-      id: Date.now(),
-      menfess_id: menfess.id,
-      content: commentText.trim(),
-      created_at: new Date().toISOString(),
-    };
+    const { data, error } = await supabase
+      .from('comments')
+      .insert([
+        {
+          menfess_id: Number(id),
+          content: commentText.trim(),
+        },
+      ])
+      .select()
+      .single();
 
-    setCommentsList([...commentsList, newComment]);
+    console.log('COMMENT DATA:', data);
+    console.log('COMMENT ERROR:', error);
+
+    if (error) {
+      console.error('Gagal mengirim komentar:', error);
+      alert('Komentar gagal dikirim.');
+      return;
+    }
+
+    setCommentsList((current) => [...current, data]);
     setCommentText('');
   };
 
@@ -153,13 +291,13 @@ function MenfessDetail() {
                 <button
                   type="button"
                   className={`gh-btn gh-btn-sm ${liked ? 'gh-btn--active' : ''}`}
-                  onClick={() => setLiked(!liked)}
+                  onClick={handleLike}
                   aria-pressed={liked}
                 >
                   <svg width="14" height="14" viewBox="0 0 16 16" fill={liked ? '#cf222e' : 'currentColor'} aria-hidden="true">
                     <path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.75 1 6.3 1 7.28 1.84 8 2.68 8.72 1.84 9.7 1 11.25 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.094 22.094 0 0 1-3.433 2.414 7.152 7.152 0 0 1-.31.17l-.018.01-.008.004L8 14.25Zm0-1.445.006-.003.037-.019c.145-.077.37-.2.66-.368a20.6 20.6 0 0 0 3.196-2.248C13.635 8.85 14.5 6.98 14.5 5.5 14.5 3.7 13.06 2.5 11.25 2.5c-1.3 0-2.26.83-2.61 1.76a.75.75 0 0 1-1.28 0C7.01 3.33 6.05 2.5 4.75 2.5 2.94 2.5 1.5 3.7 1.5 5.5c0 1.48.864 3.35 2.607 4.616a20.61 20.61 0 0 0 3.196 2.248c.29.168.515.291.66.368l.037.019.006.003h-.012Z" />
                   </svg>
-                  <span>{menfess.likes + (liked ? 1 : 0)}</span>
+                  <span>{likeCount}</span>
                 </button>
               </div>
             </div>

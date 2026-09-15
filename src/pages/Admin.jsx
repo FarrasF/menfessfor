@@ -1,7 +1,290 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import './Admin.css';
 
+function getCategoryLabelClass(category) {
+  const map = {
+    Confess: 'gh-label-confess',
+    Curhat: 'gh-label-curhat',
+    Akademik: 'gh-label-akademik',
+    Random: 'gh-label-random',
+  };
+
+  return map[category] || '';
+}
+
 function Admin() {
+  const [menfess, setMenfess] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [activeTab, setActiveTab] = useState('pending');
+
+  async function updateReportStatus(reportId, status) {
+    const { error } = await supabase
+      .from('reports')
+      .update({ status })
+      .eq('id', reportId);
+
+    if (error) {
+      console.error('Gagal mengubah status report:', error);
+      alert('Gagal mengubah status laporan.');
+      return;
+    }
+
+    setReports((current) =>
+      current.map((report) =>
+        report.id === reportId
+          ? { ...report, status }
+          : report
+      )
+    );
+  }
+
+  async function deleteReportedContent(report) {
+    const isMenfess = Boolean(report.menfess_id);
+    const targetId = isMenfess
+      ? report.menfess_id
+      : report.comment_id;
+
+    const table = isMenfess ? 'menfess' : 'comments';
+    const idColumn = 'id';
+
+    const confirmed = window.confirm(
+      isMenfess
+        ? 'Yakin ingin menghapus menfess ini?'
+        : 'Yakin ingin menghapus komentar ini?'
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq(idColumn, targetId);
+
+    if (error) {
+      console.error('Gagal menghapus konten:', error);
+      alert('Gagal menghapus konten.');
+      return;
+    }
+
+    await updateReportStatus(report.id, 'resolved');
+
+    setReports((current) =>
+      current.filter((item) => item.id !== report.id)
+    );
+  }
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [session, setSession] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [approvedCount, setApprovedCount] = useState(0);
+  const [approvedMenfess, setApprovedMenfess] = useState([]);
+  const [approvedLoading, setApprovedLoading] = useState(false);
+
+  useEffect(() => {
+    checkAdmin();
+  }, []);
+
+  async function checkAdmin() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error('Auth error:', error);
+      return;
+    }
+
+    setSession(data.session);
+
+    if (data.session) {
+      fetchPendingMenfess();
+      fetchReports();
+      fetchApprovedCount();
+      fetchApprovedMenfess();
+    } else {
+      setLoading(false);
+    }
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+
+    setLoggingIn(true);
+    setLoginError('');
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Login gagal:', error);
+      setLoginError('Email atau password salah.');
+      setLoggingIn(false);
+      return;
+    }
+
+    setSession(data.session);
+    setLoggingIn(false);
+
+    fetchPendingMenfess();
+    fetchReports();
+    fetchApprovedCount();
+    fetchApprovedMenfess();
+  }
+
+  async function fetchReports() {
+    setReportsLoading(true);
+
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal mengambil reports:', error);
+      setReports([]);
+    } else {
+      setReports(data);
+    }
+
+    setReportsLoading(false);
+  }
+
+  async function fetchPendingMenfess() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from('menfess')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal mengambil menfess:', error);
+      setError(error.message);
+    } else {
+      setMenfess(data);
+    }
+
+    setLoading(false);
+  }
+
+  async function fetchApprovedCount() {
+    const { count, error } = await supabase
+      .from('menfess')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'approved');
+
+    if (error) {
+      console.error('Gagal mengambil jumlah approved:', error);
+      return;
+    }
+
+    setApprovedCount(count || 0);
+  }
+
+  async function fetchApprovedMenfess() {
+    setApprovedLoading(true);
+
+    const { data, error } = await supabase
+      .from('menfess')
+      .select('*')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal mengambil approved menfess:', error);
+      setApprovedMenfess([]);
+    } else {
+      setApprovedMenfess(data);
+    }
+
+    setApprovedLoading(false);
+  }
+
+  async function updateStatus(id, status) {
+    const { error } = await supabase
+      .from('menfess')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) {
+      console.error(`Gagal mengubah status menjadi ${status}:`, error);
+      alert('Gagal mengubah status menfess.');
+      return;
+    }
+
+    // Hapus dari daftar pending setelah berhasil
+    setMenfess((current) =>
+      current.filter((item) => item.id !== id)
+    );
+    if (status === 'approved') {
+      fetchApprovedCount();
+    }
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    setSession(null);
+  }
+
+  if (!session) {
+    return (
+      <main className="page">
+        <div className="container container--sm">
+          <div className="gh-box">
+            <h2>Admin Login</h2>
+
+            <form onSubmit={handleLogin}>
+              <div>
+                <label htmlFor="admin-email">Email</label>
+                <input
+                  id="admin-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-password">Password</label>
+                <input
+                  id="admin-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {loginError && (
+                <p>
+                  {loginError}
+                </p>
+              )}
+
+              <button
+                className="gh-btn gh-btn-primary"
+                type="submit"
+                disabled={loggingIn}
+              >
+                {loggingIn ? 'Logging in...' : 'Login'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="page">
       <div className="container container--sm">
@@ -13,6 +296,13 @@ function Admin() {
             </svg>
             <h1 className="admin-header__title">Moderation Dashboard</h1>
           </div>
+          <button
+            type="button"
+            className="gh-btn"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
           <p className="admin-header__desc">
             Kelola dan moderasi menfess yang masuk sebelum dipublikasikan ke publik.
           </p>
@@ -20,95 +310,301 @@ function Admin() {
 
         {/* GitHub Sub-navigation Tabs */}
         <div className="admin-tabs">
-          <button className="admin-tab admin-tab--active" type="button">
-            Pending Queue <span className="admin-tab__counter">3</span>
+          <button
+            className={`admin-tab ${activeTab === 'pending' ? 'admin-tab--active' : ''}`}
+            type="button"
+            onClick={() => setActiveTab('pending')}
+          >
+            Pending Queue
+            <span className="admin-tab__counter">{menfess.length}</span>
           </button>
-          <button className="admin-tab" type="button">
-            Approved Menfess <span className="admin-tab__counter">28</span>
+
+          <button
+            className={`admin-tab ${activeTab === 'approved' ? 'admin-tab--active' : ''}`}
+            type="button"
+            onClick={() => setActiveTab('approved')}
+          >
+            Approved Menfess
+            <span className="admin-tab__counter">{approvedCount}</span>
           </button>
-          <button className="admin-tab" type="button">
-            Reports <span className="admin-tab__counter">0</span>
+
+          <button
+            className={`admin-tab ${activeTab === 'reports' ? 'admin-tab--active' : ''}`}
+            type="button"
+            onClick={() => setActiveTab('reports')}
+          >
+            Reports
+            <span className="admin-tab__counter">{reports.length}</span>
           </button>
         </div>
 
-        {/* GitHub Moderation Queue Box */}
-        <div className="gh-box admin-queue-box">
-          <div className="gh-box-header">
-            <div className="admin-queue-header">
-              <input type="checkbox" disabled aria-label="Select all" />
-              <span>3 menfess menunggu peninjauan</span>
+        {activeTab === 'pending' && (
+          <div className="gh-box admin-queue-box">
+            <div className="gh-box-header">
+              <div className="admin-queue-header">
+                <input type="checkbox" disabled aria-label="Select all" />
+                <span>{menfess.length} menfess menunggu peninjauan</span>
+              </div>
+              <span className="admin-queue-badge">Supabase Ready</span>
             </div>
-            <span className="admin-queue-badge">Supabase Ready</span>
+
+            <div className="admin-queue-list">
+              {loading && (
+                <div className="admin-queue-item">
+                  <p className="admin-queue-item__preview">
+                    Memuat menfess...
+                  </p>
+                </div>
+              )}
+
+              {error && (
+                <div className="admin-queue-item">
+                  <p className="admin-queue-item__preview">
+                    Error: {error}
+                  </p>
+                </div>
+              )}
+
+              {!loading && !error && menfess.length === 0 && (
+                <div className="admin-queue-item">
+                  <p className="admin-queue-item__preview">
+                    Tidak ada menfess yang menunggu peninjauan.
+                  </p>
+                </div>
+              )}
+
+              {!loading &&
+                !error &&
+                menfess.map((item) => (
+                  <div className="admin-queue-item" key={item.id}>
+                    <div className="admin-queue-item__main">
+                      <div className="admin-queue-item__meta">
+                        <span className="gh-state gh-state-pending">
+                          Pending
+                        </span>
+
+                        <span className={`gh-label ${getCategoryLabelClass(item.category)}`}>
+                          {item.category}
+                        </span>
+
+                        <span className="admin-queue-item__id">
+                          #{item.id}
+                        </span>
+
+                        <span className="admin-queue-item__time">
+                          {new Date(item.created_at).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+
+                      <p className="admin-queue-item__preview">
+                        "{item.content}"
+                      </p>
+                    </div>
+
+                    <div className="admin-queue-item__actions">
+                      <button
+                        className="gh-btn gh-btn-sm gh-btn-primary"
+                        type="button"
+                        onClick={() => updateStatus(item.id, 'approved')}
+                      >
+                        Approve
+                      </button>
+
+                      <button
+                        className="gh-btn gh-btn-sm gh-btn-danger"
+                        type="button"
+                        onClick={() => updateStatus(item.id, 'rejected')}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+
+            </div>
           </div>
+        )}
 
-          <div className="admin-queue-list">
-            <div className="admin-queue-item">
-              <div className="admin-queue-item__main">
-                <div className="admin-queue-item__meta">
-                  <span className="gh-state gh-state-pending">Pending</span>
-                  <span className="gh-label gh-label-curhat">Curhat</span>
-                  <span className="admin-queue-item__id">#007</span>
-                  <span className="admin-queue-item__time">5 menit lalu</span>
-                </div>
-                <p className="admin-queue-item__preview">
-                  "Halo min, mau tanya dong dosen pembimbing untuk topik Machine Learning yang asik siapa ya?"
-                </p>
+        {activeTab === 'approved' && (
+          <div className="gh-box admin-queue-box">
+            <div className="gh-box-header">
+              <div className="admin-queue-header">
+                <span>{approvedMenfess.length} menfess telah disetujui</span>
               </div>
-              <div className="admin-queue-item__actions">
-                <button className="gh-btn gh-btn-sm gh-btn-primary" type="button" title="Approve">
-                  Approve
-                </button>
-                <button className="gh-btn gh-btn-sm gh-btn-danger" type="button" title="Reject">
-                  Reject
-                </button>
-              </div>
+
+              <span className="admin-queue-badge">
+                Published
+              </span>
             </div>
 
-            <div className="admin-queue-item">
-              <div className="admin-queue-item__main">
-                <div className="admin-queue-item__meta">
-                  <span className="gh-state gh-state-pending">Pending</span>
-                  <span className="gh-label gh-label-confess">Confess</span>
-                  <span className="admin-queue-item__id">#008</span>
-                  <span className="admin-queue-item__time">18 menit lalu</span>
+            <div className="admin-queue-list">
+              {approvedLoading && (
+                <div className="admin-queue-item">
+                  <p className="admin-queue-item__preview">
+                    Memuat approved menfess...
+                  </p>
                 </div>
-                <p className="admin-queue-item__preview">
-                  "Buat kaka angkatan 22 yang sering duduk di pojok lab praktikum algoritma, senyum kamu manis bgt hehe."
-                </p>
-              </div>
-              <div className="admin-queue-item__actions">
-                <button className="gh-btn gh-btn-sm gh-btn-primary" type="button" title="Approve">
-                  Approve
-                </button>
-                <button className="gh-btn gh-btn-sm gh-btn-danger" type="button" title="Reject">
-                  Reject
-                </button>
-              </div>
-            </div>
+              )}
 
-            <div className="admin-queue-item">
-              <div className="admin-queue-item__main">
-                <div className="admin-queue-item__meta">
-                  <span className="gh-state gh-state-pending">Pending</span>
-                  <span className="gh-label gh-label-akademik">Akademik</span>
-                  <span className="admin-queue-item__id">#009</span>
-                  <span className="admin-queue-item__time">42 menit lalu</span>
+              {!approvedLoading && approvedMenfess.length === 0 && (
+                <div className="admin-queue-item">
+                  <p className="admin-queue-item__preview">
+                    Belum ada menfess yang disetujui.
+                  </p>
                 </div>
-                <p className="admin-queue-item__preview">
-                  "Info kisi-kisi UTS Struktur Data kelas B ada yang punya ga guys? Makasih sebelumnya!"
-                </p>
-              </div>
-              <div className="admin-queue-item__actions">
-                <button className="gh-btn gh-btn-sm gh-btn-primary" type="button" title="Approve">
-                  Approve
-                </button>
-                <button className="gh-btn gh-btn-sm gh-btn-danger" type="button" title="Reject">
-                  Reject
-                </button>
-              </div>
+              )}
+
+              {!approvedLoading &&
+                approvedMenfess.map((item) => (
+                  <div className="admin-queue-item" key={item.id}>
+                    <div className="admin-queue-item__main">
+                      <div className="admin-queue-item__meta">
+                        <span className="gh-state gh-state-approved">
+                          Approved
+                        </span>
+
+                        <span
+                          className={`gh-label ${getCategoryLabelClass(item.category)}`}
+                        >
+                          {item.category}
+                        </span>
+
+                        <span className="admin-queue-item__id">
+                          #{item.id}
+                        </span>
+
+                        <span className="admin-queue-item__time">
+                          {new Date(item.created_at).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+
+                      <p className="admin-queue-item__preview">
+                        "{item.content}"
+                      </p>
+                    </div>
+
+                    <div className="admin-queue-item__actions">
+                      <button
+                        className="gh-btn gh-btn-sm gh-btn-danger"
+                        type="button"
+                        onClick={async () => {
+                          const confirmed = window.confirm(
+                            'Yakin ingin menghapus menfess ini?'
+                          );
+
+                          if (!confirmed) return;
+
+                          const { error } = await supabase
+                            .from('menfess')
+                            .delete()
+                            .eq('id', item.id);
+
+                          if (error) {
+                            console.error('Gagal menghapus menfess:', error);
+                            alert('Gagal menghapus menfess.');
+                            return;
+                          }
+
+                          setApprovedMenfess((current) =>
+                            current.filter((menfess) => menfess.id !== item.id)
+                          );
+
+                          setApprovedCount((current) =>
+                            Math.max(0, current - 1)
+                          );
+                        }}
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="gh-box admin-queue-box">
+            <div className="gh-box-header">
+              <div className="admin-queue-header">
+                <span>{reports.length} laporan masuk</span>
+              </div>
+
+              <span className="admin-queue-badge">
+                Supabase Ready
+              </span>
+            </div>
+
+            <div className="admin-queue-list">
+              {reportsLoading && (
+                <div className="admin-queue-item">
+                  <p className="admin-queue-item__preview">
+                    Memuat laporan...
+                  </p>
+                </div>
+              )}
+
+              {!reportsLoading && reports.length === 0 && (
+                <div className="admin-queue-item">
+                  <p className="admin-queue-item__preview">
+                    Belum ada laporan.
+                  </p>
+                </div>
+              )}
+
+              {!reportsLoading &&
+                reports.map((report) => (
+                  <div className="admin-queue-item" key={report.id}>
+                    <div className="admin-queue-item__main">
+                      <div className="admin-queue-item__meta">
+                        <span className="gh-state gh-state-pending">
+                          Report
+                        </span>
+
+                        <span className="admin-queue-item__id">
+                          #{report.id}
+                        </span>
+
+                        <span className="admin-queue-item__time">
+                          {new Date(report.created_at).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+
+                      <p className="admin-queue-item__preview">
+                        <strong>
+                          {report.menfess_id
+                            ? `Menfess #${report.menfess_id}`
+                            : `Komentar #${report.comment_id}`}
+                        </strong>
+                      </p>
+
+                      <p className="admin-queue-item__preview">
+                        Alasan: "{report.reason}"
+                      </p>
+                      <div className="admin-queue-item__actions">
+                        <button
+                          type="button"
+                          className="gh-btn gh-btn-sm"
+                          onClick={() => deleteReportedContent(report)}
+                        >
+                          Hapus
+                        </button>
+
+                        <button
+                          type="button"
+                          className="gh-btn gh-btn-sm"
+                          onClick={() => updateReportStatus(report.id, 'dismissed')}
+                        >
+                          Abaikan
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* Back Link */}
         <div className="admin-footer">

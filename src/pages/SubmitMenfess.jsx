@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../data/dummyData';
+import { supabase } from '../lib/supabase';
 import './SubmitMenfess.css';
 
 const MAX_CHARS = 500;
@@ -25,12 +26,30 @@ function SubmitMenfess() {
   const isOverLimit = charCount > MAX_CHARS;
   const isValid = category && content.trim().length > 0 && !isOverLimit;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isValid) return;
 
-    // Future: send to Supabase with status 'pending'
-    console.log('Menfess submitted:', { category, content });
+    const { data: sessionData } = await supabase.auth.getSession();
+
+    console.log('SESSION:', sessionData.session);
+
+    const { error } = await supabase
+      .from('menfess')
+      .insert([
+        {
+          content: content.trim(),
+          category: category,
+          status: 'pending',
+        },
+      ]);
+
+    if (error) {
+      console.error('Gagal mengirim menfess:', error);
+      alert('Menfess gagal dikirim. Coba lagi.');
+      return;
+    }
+
     setSubmitted(true);
   };
 
@@ -127,9 +146,8 @@ function SubmitMenfess() {
                     <button
                       key={cat}
                       type="button"
-                      className={`gh-label submit-label-btn ${getCategoryLabelClass(cat)} ${
-                        isSelected ? 'submit-label-btn--selected' : ''
-                      }`}
+                      className={`gh-label submit-label-btn ${getCategoryLabelClass(cat)} ${isSelected ? 'submit-label-btn--selected' : ''
+                        }`}
                       onClick={() => setCategory(cat)}
                       aria-pressed={isSelected}
                     >

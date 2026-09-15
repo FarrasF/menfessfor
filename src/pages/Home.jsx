@@ -1,9 +1,34 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MenfessCard from '../components/MenfessCard';
-import { dummyMenfess } from '../data/dummyData';
+import { supabase } from '../lib/supabase';
 import './Home.css';
 
 function Home() {
+  const [menfess, setMenfess] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchMenfess() {
+      const { data, error } = await supabase
+        .from('menfess')
+        .select('*')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setMenfess(data);
+      }
+
+      setLoading(false);
+    }
+
+    fetchMenfess();
+  }, []);
+
   return (
     <main className="page">
       <div className="container">
@@ -53,15 +78,25 @@ function Home() {
               <svg width="16" height="16" viewBox="0 0 16 16" fill="#8250df" aria-hidden="true">
                 <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
               </svg>
-              <h2 className="gh-feed-header__title">{dummyMenfess.length} Discussions</h2>
+              <h2 className="gh-feed-header__title">{menfess.length} Discussions</h2>
             </div>
             <span className="gh-feed-header__subtitle">Diurutkan berdasarkan terbaru</span>
           </div>
 
           <div className="gh-feed-list">
-            {dummyMenfess.map((menfess) => (
-              <MenfessCard key={menfess.id} {...menfess} />
-            ))}
+            {loading && <p>Memuat menfess...</p>}
+
+            {error && <p>Error: {error}</p>}
+
+            {!loading && !error && menfess.length === 0 && (
+              <p>Belum ada menfess.</p>
+            )}
+
+            {!loading &&
+              !error &&
+              menfess.map((item) => (
+                <MenfessCard key={item.id} {...item} />
+              ))}
           </div>
         </section>
       </div>

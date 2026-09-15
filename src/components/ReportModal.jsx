@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 import './ReportModal.css';
 
 /**
@@ -19,10 +20,47 @@ function ReportModal({ isOpen, onClose, targetType = 'menfess', targetId }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Report submitted:', { targetType, targetId, selectedReason, additionalInfo });
+
+    if (!selectedReason || !targetId) return;
+
+    let anonymousId = localStorage.getItem('anonymous_id');
+
+    if (!anonymousId) {
+      anonymousId = crypto.randomUUID();
+      localStorage.setItem('anonymous_id', anonymousId);
+    }
+
+    const reportData =
+      targetType === 'menfess'
+        ? {
+          menfess_id: Number(targetId),
+          reason: additionalInfo
+            ? `${selectedReason} — ${additionalInfo}`
+            : selectedReason,
+          anonymous_id: anonymousId,
+        }
+        : {
+          comment_id: Number(targetId),
+          reason: additionalInfo
+            ? `${selectedReason} — ${additionalInfo}`
+            : selectedReason,
+          anonymous_id: anonymousId,
+        };
+
+    const { error } = await supabase
+      .from('reports')
+      .insert([reportData]);
+
+    if (error) {
+      console.error('Gagal mengirim laporan:', error);
+      alert('Laporan gagal dikirim.');
+      return;
+    }
+
     setSubmitted(true);
+
     setTimeout(() => {
       setSubmitted(false);
       setSelectedReason('');
