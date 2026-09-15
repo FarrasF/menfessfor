@@ -188,10 +188,9 @@
 
 .admin-queue-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: 14px 16px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--color-border-default);
   background-color: var(--color-canvas-default);
   transition: background-color var(--transition-fast);
@@ -205,18 +204,18 @@
   background-color: var(--color-canvas-subtle);
 }
 
-.admin-queue-item__main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.admin-queue-item__meta {
+.admin-queue-item__header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-queue-item__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -226,23 +225,68 @@
   color: var(--color-fg-muted);
 }
 
+.admin-queue-item__meta-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-queue-item__public-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent-fg);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.admin-queue-item__public-link:hover {
+  text-decoration: underline;
+}
+
 .admin-queue-item__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: var(--text-xs);
   color: var(--color-fg-muted);
 }
 
 .admin-queue-item__preview {
+  padding: 12px 14px;
   font-size: var(--text-sm);
   color: var(--color-fg-default);
-  line-height: 1.5;
+  line-height: 1.55;
+  background-color: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .admin-queue-item__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-top: 2px;
+  gap: 8px;
+}
+
+.admin-queue-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-queue-actions-row .gh-btn,
+.admin-queue-item__actions .gh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .admin-footer {
@@ -391,14 +435,265 @@
   text-decoration: underline;
 }
 
-.admin-report-link {
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
+/* Reports Tab - GitHub Primer Style */
+.admin-reports-list {
+  display: flex;
+  flex-direction: column;
 }
 
-.admin-report-link:hover {
+.admin-queue-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}
+
+.admin-report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-default);
+  background-color: var(--color-canvas-default);
+  transition: background-color var(--transition-fast);
+}
+
+.admin-report-card:last-child {
+  border-bottom: none;
+}
+
+.admin-report-card:hover {
+  background-color: var(--color-canvas-subtle);
+}
+
+.admin-report-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-report-card__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-report-flag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background-color: var(--color-danger-subtle);
+  color: var(--color-danger-fg);
+  border: 1px solid rgba(207, 34, 46, 0.25);
+  font-family: var(--font-mono);
+}
+
+.gh-label--menfess-type {
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent-fg);
+  border-color: rgba(9, 105, 218, 0.2);
+  font-weight: 600;
+}
+
+.gh-label--comment-type {
+  background-color: var(--color-label-curhat-bg);
+  color: var(--color-label-curhat-text);
+  border-color: var(--color-label-curhat-border);
+  font-weight: 600;
+}
+
+.admin-report-card__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+
+/* Reason Callout Box (Attention/Warning style) */
+.admin-report-reason-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background-color: var(--color-attention-subtle);
+  border: 1px solid var(--color-label-random-border);
+  border-radius: var(--radius-md);
+}
+
+.admin-report-reason-box__header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-attention-fg);
+}
+
+.admin-report-reason-box__text {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-fg-default);
+  line-height: 1.45;
+}
+
+/* Reported Content Box (GitHub Sub-box style) */
+.admin-report-target-box {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-canvas-subtle);
+  overflow: hidden;
+}
+
+.admin-report-target-box__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-default);
+  font-size: var(--text-xs);
+}
+
+.admin-report-target-box__title {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.admin-report-target-box__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent-fg);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.admin-report-target-box__link:hover {
   text-decoration: underline;
+}
+
+.admin-report-target-box__content {
+  padding: 12px 14px;
+  font-size: var(--text-sm);
+  color: var(--color-fg-default);
+  line-height: 1.55;
+  background-color: var(--color-canvas-default);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-style: italic;
+}
+
+.admin-report-target-box__missing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  background-color: var(--color-canvas-default);
+  font-style: italic;
+}
+
+/* Actions Row */
+.admin-report-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.admin-report-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-report-actions-row .gh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Inline Delete Confirmation */
+.admin-report-delete-confirm {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: var(--color-danger-subtle);
+  border: 1px solid rgba(255, 129, 130, 0.4);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.admin-report-delete-confirm__msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-danger-fg);
+}
+
+.admin-report-delete-confirm__buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .admin-report-card,
+  .admin-queue-item {
+    padding: 14px;
+  }
+
+  .admin-report-card__header,
+  .admin-queue-item__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .admin-queue-item__meta-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-report-delete-confirm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-report-delete-confirm__buttons {
+    justify-content: flex-end;
+  }
+
+  .admin-report-actions-row,
+  .admin-queue-actions-row,
+  .admin-queue-item__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }

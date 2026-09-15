@@ -202,6 +202,9 @@ function Admin() {
     setApprovedCount((current) =>
       Math.max(0, current - 1)
     );
+
+    setDeleteConfirmation(null);
+
   }
 
   async function fetchReports() {
@@ -479,34 +482,36 @@ function Admin() {
           <div className="gh-box admin-queue-box">
             <div className="gh-box-header">
               <div className="admin-queue-header">
-                <input type="checkbox" disabled aria-label="Pilih semua" />
+                <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" fill="currentColor">
+                  <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5l2.25 1.5a.75.75 0 1 1-.83 1.25l-2.67-1.78A.75.75 0 0 1 7 8.5V4.75a.75.75 0 0 1 1.5 0Z"></path>
+                </svg>
                 <span>{menfess.length} menfess menunggu peninjauan</span>
               </div>
-              <span className="admin-queue-badge">Siap</span>
+
+              <span className="admin-queue-badge">
+                Antrean
+              </span>
             </div>
 
             <div className="admin-queue-list">
               {loading && (
-                <div className="admin-queue-item">
-                  <p className="admin-queue-item__preview">
-                    Memuat menfess...
-                  </p>
+                <div className="admin-queue-empty">
+                  <p>Memuat antrean menfess...</p>
                 </div>
               )}
 
               {error && (
-                <div className="admin-queue-item">
-                  <p className="admin-queue-item__preview">
-                    Error: {error}
-                  </p>
+                <div className="admin-queue-empty">
+                  <p style={{ color: 'var(--color-danger-fg)' }}>Error: {error}</p>
                 </div>
               )}
 
               {!loading && !error && menfess.length === 0 && (
-                <div className="admin-queue-item">
-                  <p className="admin-queue-item__preview">
-                    Tidak ada menfess yang menunggu peninjauan.
-                  </p>
+                <div className="admin-queue-empty">
+                  <svg aria-hidden="true" height="32" viewBox="0 0 16 16" version="1.1" width="32" fill="currentColor" style={{ opacity: 0.4, marginBottom: '8px' }}>
+                    <path d="M1.5 3.25a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 .75.75v3.69a.75.75 0 0 1-1.5 0V4.5H2.5v7h4.75a.75.75 0 0 1 0 1.5H2.25a.75.75 0 0 1-.75-.75v-9Zm10.28 6.97a.75.75 0 0 1 0 1.06l-3 3a.75.75 0 0 1-1.06 0l-1.5-1.5a.75.75 0 1 1 1.06-1.06l.97.97 2.47-2.47a.75.75 0 0 1 1.06 0Z"></path>
+                  </svg>
+                  <p>Semua antrean bersih. Belum ada menfess baru yang menunggu peninjauan.</p>
                 </div>
               )}
 
@@ -514,9 +519,12 @@ function Admin() {
                 !error &&
                 menfess.map((item) => (
                   <div className="admin-queue-item" key={item.id}>
-                    <div className="admin-queue-item__main">
-                      <div className="admin-queue-item__meta">
+                    <div className="admin-queue-item__header">
+                      <div className="admin-queue-item__tags">
                         <span className="gh-state gh-state-pending">
+                          <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5l2.25 1.5a.75.75 0 1 1-.83 1.25l-2.67-1.78A.75.75 0 0 1 7 8.5V4.75a.75.75 0 0 1 1.5 0Z"></path>
+                          </svg>
                           Menunggu
                         </span>
 
@@ -527,15 +535,21 @@ function Admin() {
                         <span className="admin-queue-item__id">
                           #{item.id}
                         </span>
-
-                        <span className="admin-queue-item__time">
-                          {new Date(item.created_at).toLocaleString('id-ID')}
-                        </span>
                       </div>
 
-                      <p className="admin-queue-item__preview">
-                        "{item.content}"
-                      </p>
+                      <span className="admin-queue-item__time">
+                        <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                          <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5l2.25 1.5a.75.75 0 1 1-.83 1.25l-2.67-1.78A.75.75 0 0 1 7 8.5V4.75a.75.75 0 0 1 1.5 0Z"></path>
+                        </svg>
+                        {new Date(item.created_at).toLocaleString('id-ID', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="admin-queue-item__preview">
+                      "{item.content}"
                     </div>
 
                     <div className="admin-queue-item__actions">
@@ -544,6 +558,9 @@ function Admin() {
                         type="button"
                         onClick={() => updateStatus(item.id, 'approved')}
                       >
+                        <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+                        </svg>
                         Setujui
                       </button>
 
@@ -552,13 +569,14 @@ function Admin() {
                         type="button"
                         onClick={() => updateStatus(item.id, 'rejected')}
                       >
+                        <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path>
+                        </svg>
                         Tolak
                       </button>
                     </div>
                   </div>
                 ))}
-
-
             </div>
           </div>
         )}
@@ -567,6 +585,9 @@ function Admin() {
           <div className="gh-box admin-queue-box">
             <div className="gh-box-header">
               <div className="admin-queue-header">
+                <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" fill="currentColor">
+                  <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+                </svg>
                 <span>{approvedMenfess.length} menfess telah disetujui</span>
               </div>
 
@@ -577,58 +598,127 @@ function Admin() {
 
             <div className="admin-queue-list">
               {approvedLoading && (
-                <div className="admin-queue-item">
-                  <p className="admin-queue-item__preview">
-                    Memuat menfess disetujui...
-                  </p>
+                <div className="admin-queue-empty">
+                  <p>Memuat menfess disetujui...</p>
                 </div>
               )}
 
               {!approvedLoading && approvedMenfess.length === 0 && (
-                <div className="admin-queue-item">
-                  <p className="admin-queue-item__preview">
-                    Belum ada menfess yang disetujui.
-                  </p>
+                <div className="admin-queue-empty">
+                  <svg aria-hidden="true" height="32" viewBox="0 0 16 16" version="1.1" width="32" fill="currentColor" style={{ opacity: 0.4, marginBottom: '8px' }}>
+                    <path d="M1.75 1.5a.75.75 0 0 0-.75.75v12a.75.75 0 0 0 1.5 0v-4.5h3.69l.72 1.44a.75.75 0 0 0 .67.41h6.67a.75.75 0 0 0 .75-.75v-6.5a.75.75 0 0 0-.75-.75H8.75l-.72-1.44A.75.75 0 0 0 7.36 1.5H1.75Z"></path>
+                  </svg>
+                  <p>Belum ada menfess yang disetujui.</p>
                 </div>
               )}
 
               {!approvedLoading &&
                 approvedMenfess.map((item) => (
                   <div className="admin-queue-item" key={item.id}>
-                    <div className="admin-queue-item__main">
-                      <div className="admin-queue-item__meta">
+                    <div className="admin-queue-item__header">
+                      <div className="admin-queue-item__tags">
                         <span className="gh-state gh-state-approved">
+                          <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                            <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+                          </svg>
                           Disetujui
                         </span>
 
-                        <span
-                          className={`gh-label ${getCategoryLabelClass(item.category)}`}
-                        >
+                        <span className={`gh-label ${getCategoryLabelClass(item.category)}`}>
                           {item.category}
                         </span>
 
                         <span className="admin-queue-item__id">
                           #{item.id}
                         </span>
-
-                        <span className="admin-queue-item__time">
-                          {new Date(item.created_at).toLocaleString('id-ID')}
-                        </span>
                       </div>
 
-                      <p className="admin-queue-item__preview">
-                        "{item.content}"
-                      </p>
+                      <div className="admin-queue-item__meta-right">
+                        <Link
+                          to={`/menfess/${item.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="admin-queue-item__public-link"
+                          title="Buka halaman diskusi publik di tab baru"
+                        >
+                          Buka Diskusi #{item.id}
+                          <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                            <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.75.75 0 0 1 .75.75v4.146a.75.75 0 0 1-1.28.53l-1.074-1.073-4.72 4.72a.75.75 0 0 1-1.06-1.06l4.72-4.72-1.073-1.074A.75.75 0 0 1 10.604 1Z"></path>
+                          </svg>
+                        </Link>
+
+                        <span className="admin-queue-item__time">
+                          <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5l2.25 1.5a.75.75 0 1 1-.83 1.25l-2.67-1.78A.75.75 0 0 1 7 8.5V4.75a.75.75 0 0 1 1.5 0Z"></path>
+                          </svg>
+                          {new Date(item.created_at).toLocaleString('id-ID', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="admin-queue-item__preview">
+                      "{item.content}"
                     </div>
 
                     <div className="admin-queue-item__actions">
-                      <button
-                        className="gh-btn gh-btn-sm gh-btn-danger"
-                        type="button"
-                        onClick={() => deleteMenfess(item.id)}
-                      >
-                        Hapus
-                      </button>
+                      {deleteConfirmation === `approved-${item.id}` ? (
+                        <div className="admin-report-delete-confirm">
+                          <div className="admin-report-delete-confirm__msg">
+                            <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path>
+                            </svg>
+                            <span>Yakin ingin menghapus menfess #{item.id} secara permanen?</span>
+                          </div>
+
+                          <div className="admin-report-delete-confirm__buttons">
+                            <button
+                              type="button"
+                              className="gh-btn gh-btn-sm gh-btn-danger"
+                              onClick={() => deleteMenfess(item.id)}
+                            >
+                              Ya, Hapus Menfess
+                            </button>
+
+                            <button
+                              type="button"
+                              className="gh-btn gh-btn-sm"
+                              onClick={() => setDeleteConfirmation(null)}
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="admin-queue-actions-row">
+                          <Link
+                            to={`/menfess/${item.id}`}
+                            className="gh-btn gh-btn-sm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0ZM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM5 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm6 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-3 3a3 3 0 0 0 2.83-2H6.17A3 3 0 0 0 8 11Z"></path>
+                            </svg>
+                            Lihat Diskusi
+                          </Link>
+
+                          <button
+                            type="button"
+                            className="gh-btn gh-btn-sm gh-btn-danger"
+                            onClick={() =>
+                              setDeleteConfirmation(`approved-${item.id}`)
+                            }
+                          >
+                            <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.15l-.66 6.6A1.75 1.75 0 0 1 10.595 15H5.405a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path>
+                            </svg>
+                            Hapus
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -640,129 +730,166 @@ function Admin() {
           <div className="gh-box admin-queue-box">
             <div className="gh-box-header">
               <div className="admin-queue-header">
-                <span>{reports.length} laporan masuk</span>
+                <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" fill="currentColor">
+                  <path d="M1.75 1.5a.75.75 0 0 0-.75.75v12a.75.75 0 0 0 1.5 0v-4.5h3.69l.72 1.44a.75.75 0 0 0 .67.41h6.67a.75.75 0 0 0 .75-.75v-6.5a.75.75 0 0 0-.75-.75H8.75l-.72-1.44A.75.75 0 0 0 7.36 1.5H1.75Z"></path>
+                </svg>
+                <span>{reports.length} laporan memerlukan tindakan</span>
               </div>
 
               <span className="admin-queue-badge">
-                Siap
+                Moderasi
               </span>
             </div>
 
-            <div className="admin-queue-list">
+            <div className="admin-reports-list">
               {reportsLoading && (
-                <div className="admin-queue-item">
-                  <p className="admin-queue-item__preview">
-                    Memuat laporan...
-                  </p>
+                <div className="admin-queue-empty">
+                  <p>Memuat laporan...</p>
                 </div>
               )}
 
               {!reportsLoading && reports.length === 0 && (
-                <div className="admin-queue-item">
-                  <p className="admin-queue-item__preview">
-                    Belum ada laporan.
-                  </p>
+                <div className="admin-queue-empty">
+                  <svg aria-hidden="true" height="32" viewBox="0 0 16 16" version="1.1" width="32" fill="currentColor" style={{ opacity: 0.4, marginBottom: '8px' }}>
+                    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+                  </svg>
+                  <p>Tidak ada laporan masuk yang perlu ditinjau.</p>
                 </div>
               )}
 
               {!reportsLoading &&
-                reports.map((report) => (
-                  <div className="admin-queue-item" key={report.id}>
-                    <div className="admin-queue-item__main">
+                reports.map((report) => {
+                  const isMenfess = Boolean(report.menfess_id);
+                  const targetMenfessId = isMenfess ? report.menfess_id : report.comment?.menfess_id;
+                  const contentText = isMenfess ? report.menfess?.content : report.comment?.content;
+                  const hasTargetData = isMenfess ? Boolean(report.menfess) : Boolean(report.comment);
 
-                      <div className="admin-queue-item__meta">
-                        <span className="gh-state gh-state-pending">
-                          Laporan
-                        </span>
+                  return (
+                    <article className="admin-report-card" key={report.id}>
+                      {/* Header Bar */}
+                      <div className="admin-report-card__header">
+                        <div className="admin-report-card__tags">
+                          <span className="admin-report-flag-badge">
+                            <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                              <path d="M1.75 1.5a.75.75 0 0 0-.75.75v12a.75.75 0 0 0 1.5 0v-4.5h3.69l.72 1.44a.75.75 0 0 0 .67.41h6.67a.75.75 0 0 0 .75-.75v-6.5a.75.75 0 0 0-.75-.75H8.75l-.72-1.44A.75.75 0 0 0 7.36 1.5H1.75Z"></path>
+                            </svg>
+                            Laporan #{report.id}
+                          </span>
 
-                        <span className="admin-queue-item__id">
-                          #{report.id}
-                        </span>
+                          <span className={`gh-label ${isMenfess ? 'gh-label--menfess-type' : 'gh-label--comment-type'}`}>
+                            {isMenfess ? 'Menfess' : 'Komentar'}
+                          </span>
 
-                        <span className="admin-queue-item__time">
-                          {new Date(report.created_at).toLocaleString('id-ID')}
+                          {report.menfess?.category && (
+                            <span className="gh-label">
+                              {report.menfess.category}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="admin-report-card__time">
+                          <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5l2.25 1.5a.75.75 0 1 1-.83 1.25l-2.67-1.78A.75.75 0 0 1 7 8.5V4.75a.75.75 0 0 1 1.5 0Z"></path>
+                          </svg>
+                          {new Date(report.created_at).toLocaleString('id-ID', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
                         </span>
                       </div>
 
-                      {/* Report komentar */}
-                      {report.comment_id && report.comment && (
-                        <>
-                          <p className="admin-queue-item__preview">
-                            <strong>
-                              Komentar #{report.comment.id}
-                            </strong>
-                          </p>
+                      {/* Reason Callout Box */}
+                      <div className="admin-report-reason-box">
+                        <div className="admin-report-reason-box__header">
+                          <svg aria-hidden="true" height="14" viewBox="0 0 16 16" version="1.1" width="14" fill="currentColor">
+                            <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path>
+                          </svg>
+                          <span>Alasan Pelaporan</span>
+                        </div>
+                        <p className="admin-report-reason-box__text">
+                          "{report.reason}"
+                        </p>
+                      </div>
 
-                          <p className="admin-queue-item__preview">
-                            "{report.comment.content}"
-                          </p>
+                      {/* Reported Content Preview Box */}
+                      <div className="admin-report-target-box">
+                        <div className="admin-report-target-box__header">
+                          <span className="admin-report-target-box__title">
+                            {isMenfess
+                              ? `Isi Menfess #${report.menfess_id}`
+                              : `Isi Komentar #${report.comment_id}`}
+                          </span>
 
-                          <Link
-                            to={`/menfess/${report.comment.menfess_id}`}
-                            className="admin-report-link"
-                          >
-                            Lihat Menfess #{report.comment.menfess_id} →
-                          </Link>
-                        </>
-                      )}
-
-                      {/* Report menfess */}
-                      {report.menfess_id && report.menfess && (
-                        <>
-                          <p className="admin-queue-item__preview">
-                            <strong>
-                              Menfess #{report.menfess.id}
-                            </strong>
-                          </p>
-
-                          <p className="admin-queue-item__preview">
-                            "{report.menfess.content}"
-                          </p>
-
-                          <Link
-                            to={`/menfess/${report.menfess.id}`}
-                            className="admin-report-link"
-                          >
-                            Lihat Menfess #{report.menfess.id} →
-                          </Link>
-                        </>
-                      )}
-
-                      <p className="admin-queue-item__preview">
-                        Alasan: "{report.reason}"
-                      </p>
-
-                      <div className="admin-queue-item__actions">
-                        {deleteConfirmation === report.id ? (
-                          <>
-                            <span className="admin-delete-confirm-text">
-                              Yakin ingin menghapus?
-                            </span>
-
-                            <button
-                              type="button"
-                              className="gh-btn gh-btn-sm gh-btn-danger"
-                              onClick={() => deleteReportedContent(report)}
+                          {targetMenfessId && (
+                            <Link
+                              to={`/menfess/${targetMenfessId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="admin-report-target-box__link"
+                              title="Buka halaman diskusi ini di tab baru"
                             >
-                              Ya, hapus
-                            </button>
+                              Buka Diskusi #{targetMenfessId}
+                              <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                                <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.75.75 0 0 1 .75.75v4.146a.75.75 0 0 1-1.28.53l-1.074-1.073-4.72 4.72a.75.75 0 0 1-1.06-1.06l4.72-4.72-1.073-1.074A.75.75 0 0 1 10.604 1Z"></path>
+                              </svg>
+                            </Link>
+                          )}
+                        </div>
 
-                            <button
-                              type="button"
-                              className="gh-btn gh-btn-sm"
-                              onClick={() => setDeleteConfirmation(null)}
-                            >
-                              Batal
-                            </button>
-                          </>
+                        {hasTargetData ? (
+                          <div className="admin-report-target-box__content">
+                            "{contentText}"
+                          </div>
                         ) : (
-                          <>
+                          <div className="admin-report-target-box__missing">
+                            <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm9-3a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM6.75 8a.75.75 0 0 0 0 1.5h.75v2.25a.75.75 0 0 0 1.5 0V8.75A.75.75 0 0 0 8.25 8h-1.5Z"></path>
+                            </svg>
+                            Konten ini sudah tidak ditemukan atau telah dihapus sebelumnya.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Footer */}
+                      <div className="admin-report-card__actions">
+                        {deleteConfirmation === report.id ? (
+                          <div className="admin-report-delete-confirm">
+                            <div className="admin-report-delete-confirm__msg">
+                              <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path>
+                              </svg>
+                              <span>Yakin ingin menghapus {isMenfess ? 'menfess' : 'komentar'} ini secara permanen?</span>
+                            </div>
+
+                            <div className="admin-report-delete-confirm__buttons">
+                              <button
+                                type="button"
+                                className="gh-btn gh-btn-sm gh-btn-danger"
+                                onClick={() => deleteReportedContent(report)}
+                              >
+                                Ya, Hapus Konten
+                              </button>
+
+                              <button
+                                type="button"
+                                className="gh-btn gh-btn-sm"
+                                onClick={() => setDeleteConfirmation(null)}
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="admin-report-actions-row">
                             <button
                               type="button"
                               className="gh-btn gh-btn-sm gh-btn-danger"
                               onClick={() => setDeleteConfirmation(report.id)}
                             >
-                              Hapus
+                              <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.15l-.66 6.6A1.75 1.75 0 0 1 10.595 15H5.405a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path>
+                              </svg>
+                              Hapus Konten
                             </button>
 
                             <button
@@ -771,16 +898,19 @@ function Admin() {
                               onClick={() =>
                                 updateReportStatus(report.id, 'dismissed')
                               }
+                              title="Abaikan laporan jika konten tidak melanggar ketentuan"
                             >
-                              Abaikan
+                              <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+                              </svg>
+                              Abaikan Laporan
                             </button>
-                          </>
+                          </div>
                         )}
                       </div>
-
-                    </div>
-                  </div>
-                ))}
+                    </article>
+                  );
+                })}
             </div>
           </div>
         )}

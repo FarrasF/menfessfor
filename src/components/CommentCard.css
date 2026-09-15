@@ -40,7 +40,6 @@
   min-width: 0;
 }
 
-/* Anonymous Commenter Avatar Indicator */
 .gh-comment-avatar {
   width: 24px;
   height: 24px;
@@ -48,15 +47,54 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
+  border: 1px solid var(--color-border-default);
+  background-color: var(--color-canvas-subtle);
+  color: var(--color-fg-muted);
   flex-shrink: 0;
   box-shadow: 0 1px 2px rgba(31, 35, 40, 0.06);
 }
 
+.gh-comment-avatar--scheme-0 {
+  background-color: var(--color-label-akademik-bg);
+  color: var(--color-label-akademik-text);
+  border-color: var(--color-label-akademik-border);
+}
+
+.gh-comment-avatar--scheme-1 {
+  background-color: var(--color-label-curhat-bg);
+  color: var(--color-label-curhat-text);
+  border-color: var(--color-label-curhat-border);
+}
+
+.gh-comment-avatar--scheme-2 {
+  background-color: var(--color-success-subtle);
+  color: var(--color-success-fg);
+  border-color: rgba(46, 160, 67, 0.4);
+}
+
+.gh-comment-avatar--scheme-3 {
+  background-color: var(--color-label-random-bg);
+  color: var(--color-label-random-text);
+  border-color: var(--color-label-random-border);
+}
+
+.gh-comment-avatar--scheme-4 {
+  background-color: var(--color-label-confess-bg);
+  color: var(--color-label-confess-text);
+  border-color: var(--color-label-confess-border);
+}
+
+.gh-comment-avatar--scheme-5,
+.gh-comment-avatar--default {
+  background-color: var(--color-canvas-subtle);
+  color: var(--color-fg-muted);
+  border-color: var(--color-border-default);
+}
+
 .gh-comment-avatar--author {
-  background-color: #fbefff;
-  color: #8250df;
-  border-color: rgba(210, 168, 255, 0.4);
+  background-color: var(--color-label-curhat-bg);
+  color: var(--color-label-curhat-text);
+  border-color: var(--color-label-curhat-border);
 }
 
 .gh-comment-box__name {

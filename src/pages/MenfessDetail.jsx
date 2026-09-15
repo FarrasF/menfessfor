@@ -360,12 +360,7 @@ function MenfessDetail() {
               <div className="gh-reply-box__header">
                 <div className="gh-reply-box__header-left">
                   <div
-                    className="gh-comment-avatar"
-                    style={{
-                      backgroundColor: '#f6f8fa',
-                      color: '#57606a',
-                      borderColor: '#d0d7de',
-                    }}
+                    className="gh-comment-avatar gh-comment-avatar--default"
                     aria-hidden="true"
                   >
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">

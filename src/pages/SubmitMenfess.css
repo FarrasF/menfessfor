@@ -132,7 +132,7 @@
   height: 0;
   border-top: 6px solid transparent;
   border-bottom: 6px solid transparent;
-  border-right: 7px solid #f6f8fa;
+  border-right: 7px solid var(--color-canvas-subtle);
 }
 
 /* Label Selection Section */

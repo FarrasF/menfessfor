@@ -116,6 +116,27 @@
   background-color: rgba(208, 215, 222, 0.45);
 }
 
+.gh-header__theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--color-fg-muted);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-canvas-default);
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.gh-header__theme-btn:hover {
+  color: var(--color-fg-default);
+  background-color: var(--color-canvas-subtle);
+  border-color: var(--color-border-default);
+}
+
 .gh-header__cta {
   margin-left: var(--space-2);
 }

@@ -95,9 +95,9 @@
   font-weight: 600;
   padding: 1px 8px;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(130, 80, 223, 0.4);
-  background-color: #fbefff;
-  color: #8250df;
+  border: 1px solid var(--color-label-curhat-border);
+  background-color: var(--color-label-curhat-bg);
+  color: var(--color-label-curhat-text);
   letter-spacing: 0.2px;
 }
 
@@ -126,9 +126,9 @@
 }
 
 .gh-btn--active {
-  background-color: #ffebe9;
-  border-color: rgba(255, 129, 130, 0.4);
-  color: #cf222e;
+  background-color: var(--color-danger-subtle);
+  border-color: var(--color-label-confess-border);
+  color: var(--color-danger-fg);
 }
 
 /* Comments Section Hierarchy Divider */
@@ -161,7 +161,7 @@
 }
 
 .gh-comments-divider__pill svg {
-  color: #8250df;
+  color: var(--color-accent-fg);
 }
 
 /* Empty Comments State */

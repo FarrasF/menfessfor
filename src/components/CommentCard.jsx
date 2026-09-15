@@ -24,19 +24,9 @@ function formatTime(dateString) {
   });
 }
 
-// Subtle deterministic avatar color schemes matching GitHub's muted pastel label tones
-const AVATAR_SCHEMES = [
-  { bg: '#ddf4ff', color: '#0969da', border: 'rgba(84, 174, 255, 0.4)' },
-  { bg: '#fbefff', color: '#8250df', border: 'rgba(210, 168, 255, 0.4)' },
-  { bg: '#dafbe1', color: '#1a7f37', border: 'rgba(116, 222, 137, 0.4)' },
-  { bg: '#fff8c5', color: '#9a6700', border: 'rgba(212, 167, 44, 0.4)' },
-  { bg: '#ffebe9', color: '#cf222e', border: 'rgba(255, 129, 130, 0.4)' },
-  { bg: '#f6f8fa', color: '#57606a', border: '#d0d7de' },
-];
-
 function CommentCard({ id, content, created_at, onReport }) {
   const anonId = String(id).padStart(3, '0');
-  const scheme = AVATAR_SCHEMES[Number(id || 0) % AVATAR_SCHEMES.length];
+  const schemeIndex = Number(id || 0) % 6;
 
   return (
     <div className="gh-timeline-comment">
@@ -46,12 +36,7 @@ function CommentCard({ id, content, created_at, onReport }) {
           <div className="gh-comment-box__author">
             {/* Anonymous Commenter Avatar Indicator */}
             <div
-              className="gh-comment-avatar"
-              style={{
-                backgroundColor: scheme.bg,
-                color: scheme.color,
-                borderColor: scheme.border,
-              }}
+              className={`gh-comment-avatar gh-comment-avatar--scheme-${schemeIndex}`}
               title={`Anonim #${anonId}`}
               aria-hidden="true"
             >
