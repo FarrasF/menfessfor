@@ -84,12 +84,33 @@ function Home() {
           </div>
 
           <div className="gh-feed-list">
-            {loading && <p>Memuat menfess...</p>}
+            {loading && (
+              <div className="gh-feed-state">
+                <div className="gh-spinner" />
+                <span>Memuat diskusi...</span>
+              </div>
+            )}
 
-            {error && <p>Error: {error}</p>}
+            {error && (
+              <div className="gh-feed-state gh-feed-state--error">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--color-danger-fg)">
+                  <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-.25-6.25a.75.75 0 0 0-1.5 0v3.5a.75.75 0 0 0 1.5 0v-3.5Z" />
+                </svg>
+                <span>Error: {error}</span>
+              </div>
+            )}
 
             {!loading && !error && menfess.length === 0 && (
-              <p>Belum ada menfess.</p>
+              <div className="gh-feed-empty">
+                <svg width="40" height="40" viewBox="0 0 16 16" fill="var(--color-fg-muted)" aria-hidden="true">
+                  <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
+                </svg>
+                <h3>Belum ada diskusi</h3>
+                <p>Jadilah mahasiswa pertama yang memulai diskusi menfess secara anonim.</p>
+                <Link to="/submit" className="gh-btn gh-btn-primary">
+                  Mulai Diskusi Baru
+                </Link>
+              </div>
             )}
 
             {!loading &&

@@ -1,89 +1,138 @@
-.menfess-detail-content {
-  padding: 24px;
-  font-size: 18px;
-  line-height: 1.7;
+/* ============================================
+   GitHub Style Discussion List Item
+   ============================================ */
+
+.gh-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-top: none;
+  color: var(--color-fg-default);
+  text-decoration: none;
+  transition: background-color var(--transition-fast);
 }
 
-.menfess-detail-content p {
-  margin: 0;
-  white-space: pre-wrap;
+.gh-card:hover {
+  background-color: var(--color-canvas-subtle);
+  text-decoration: none;
 }
 
-.menfess-detail-meta {
-  padding: 0 24px 20px;
-  font-size: 13px;
-  opacity: 0.65;
+.gh-card:hover .gh-card__title {
+  color: var(--color-accent-fg);
 }
 
-.comments-box {
-  margin-top: 20px;
+.gh-card__icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.comments-list {
+.gh-card__main {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
-.comment-item {
-  padding: 18px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.comment-item__header {
+/* Title & Label Row */
+.gh-card__title-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
-  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
-.comment-item__time {
-  margin-left: auto;
-  font-size: 12px;
-  opacity: 0.55;
+.gh-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-fg-default);
+  line-height: 1.4;
+  word-break: break-word;
+  transition: color var(--transition-fast);
 }
 
-.comment-item__content {
-  margin: 0;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.comments-empty {
-  padding: 24px;
-  margin: 0;
-  opacity: 0.65;
-}
-
-.comment-form {
-  padding: 24px;
-}
-
-.comment-form textarea {
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  padding: 14px;
-  border-radius: 12px;
-  border: 2px solid #d0d7de;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.comment-form textarea:focus {
-  outline: none;
-  border-color: #8250df;
-}
-
-.comment-form__footer {
+/* Metadata Row */
+.gh-card__meta {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 12px;
-  font-size: 12px;
-  opacity: 0.7;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  flex-wrap: wrap;
 }
 
-.comment-form__footer .gh-btn {
-  opacity: 1;
+.gh-card__identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gh-card__id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-fg-subtle);
+}
+
+.gh-card__author {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.gh-card__meta-separator {
+  color: var(--color-border-default);
+  font-size: 10px;
+}
+
+.gh-card__time {
+  white-space: nowrap;
+}
+
+/* Stats (Likes & Comments) */
+.gh-card__stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.gh-card__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-fg-muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.gh-card__stat svg {
+  color: var(--color-fg-muted);
+}
+
+@media (max-width: 640px) {
+  .gh-card {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .gh-card__title {
+    font-size: 14px;
+  }
+
+  .gh-card__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .gh-card__stats {
+    margin-left: 0;
+  }
 }

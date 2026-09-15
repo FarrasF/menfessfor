@@ -79,7 +79,6 @@
   border: 1px solid var(--color-border-default);
   border-top-left-radius: var(--radius-md);
   border-top-right-radius: var(--radius-md);
-  border-bottom: none;
 }
 
 .gh-feed-header__left {
@@ -104,19 +103,74 @@
   flex-direction: column;
 }
 
-/* Stack cards inside the list so they connect like GitHub issues */
-.gh-feed-list .gh-card {
-  border-radius: 0;
-  border-top: none;
-}
-
-.gh-feed-list .gh-card:first-child {
-  border-top: 1px solid var(--color-border-default);
-}
-
-.gh-feed-list .gh-card:last-child {
+/* Connected issue/discussion list styling */
+.gh-feed-list > .gh-card:last-child {
   border-bottom-left-radius: var(--radius-md);
   border-bottom-right-radius: var(--radius-md);
+}
+
+/* State & Blankslate in Feed */
+.gh-feed-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 16px;
+  background-color: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+.gh-feed-state--error {
+  color: var(--color-danger-fg);
+}
+
+.gh-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-accent-fg);
+  border-radius: 50%;
+  animation: gh-spin 0.8s linear infinite;
+}
+
+@keyframes gh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gh-feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 16px;
+  background-color: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  gap: 10px;
+}
+
+.gh-feed-empty h3 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-fg-default);
+  margin-top: 4px;
+}
+
+.gh-feed-empty p {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  max-width: 380px;
+  margin-bottom: 8px;
 }
 
 @media (max-width: 640px) {
