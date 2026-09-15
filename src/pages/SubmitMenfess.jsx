@@ -23,7 +23,7 @@ function SubmitMenfess() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    document.title = 'New Menfess · menfessfor/informatika';
+    document.title = 'Menfess Baru · menfessfor';
   }, []);
 
   const charCount = content.length;
@@ -84,7 +84,7 @@ function SubmitMenfess() {
                 Tulis Menfess Baru
               </button>
               <Link to="/" className="gh-btn">
-                Kembali ke Discussions
+                Kembali ke Diskusi
               </Link>
             </div>
           </div>
@@ -103,14 +103,14 @@ function SubmitMenfess() {
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />
               </svg>
-              <span>Discussions</span>
+              <span>Diskusi</span>
             </Link>
             <span className="submit-header__separator">/</span>
-            <span className="submit-header__current">New Menfess</span>
+            <span className="submit-header__current">Menfess Baru</span>
           </div>
-          <h1 className="submit-header__title">Create a new Menfess</h1>
+          <h1 className="submit-header__title">Buat Menfess Baru</h1>
           <p className="submit-header__desc">
-            Sampaikan isi pikiran, unek-unek, atau cerita seputar perkuliahan Informatika secara anonim.
+            Sampaikan isi pikiran, unek-unek, atau cerita secara anonim.
           </p>
         </div>
 
@@ -139,7 +139,7 @@ function SubmitMenfess() {
             <div className="submit-form-box__section">
               <div className="submit-form-box__label-group">
                 <span className="submit-form-box__label-title">
-                  Pilih Kategori / Labels <span className="submit-form-box__required">*</span>
+                  Pilih Kategori / Label <span className="submit-form-box__required">*</span>
                 </span>
                 <span className="submit-form-box__label-hint">Pilih salah satu label yang paling sesuai</span>
               </div>
@@ -176,14 +176,14 @@ function SubmitMenfess() {
                     className={`submit-editor__tab ${activeTab === 'write' ? 'submit-editor__tab--active' : ''}`}
                     onClick={() => setActiveTab('write')}
                   >
-                    Write
+                    Tulis
                   </button>
                   <button
                     type="button"
                     className={`submit-editor__tab ${activeTab === 'preview' ? 'submit-editor__tab--active' : ''}`}
                     onClick={() => setActiveTab('preview')}
                   >
-                    Preview
+                    Pratinjau
                   </button>
                 </div>
               </div>
@@ -204,7 +204,7 @@ function SubmitMenfess() {
                     {content.trim() ? (
                       <p className="submit-editor__preview-text">{content}</p>
                     ) : (
-                      <span className="submit-editor__preview-placeholder">Tidak ada yang bisa di-preview. Tulis sesuatu di tab Write terlebih dahulu.</span>
+                      <span className="submit-editor__preview-placeholder">Tidak ada yang bisa dipratinjau. Tulis sesuatu di tab Tulis terlebih dahulu.</span>
                     )}
                   </div>
                 )}
@@ -228,14 +228,14 @@ function SubmitMenfess() {
 
               <div className="submit-form-box__actions">
                 <Link to="/" className="gh-btn">
-                  Cancel
+                  Batal
                 </Link>
                 <button
                   type="submit"
                   className="gh-btn gh-btn-primary"
                   disabled={!isValid}
                 >
-                  Submit new menfess
+                  Kirim Menfess
                 </button>
               </div>
             </div>

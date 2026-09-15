@@ -33,47 +33,66 @@ function Admin() {
     }
 
     setReports((current) =>
-      current.map((report) =>
-        report.id === reportId
-          ? { ...report, status }
-          : report
-      )
+      current.filter((report) => report.id !== reportId)
     );
   }
 
   async function deleteReportedContent(report) {
+    console.log('=== MULAI DELETE REPORT ===');
+    console.log('REPORT:', report);
+
     const isMenfess = Boolean(report.menfess_id);
+
     const targetId = isMenfess
       ? report.menfess_id
       : report.comment_id;
 
     const table = isMenfess ? 'menfess' : 'comments';
-    const idColumn = 'id';
 
-    const confirmed = window.confirm(
-      isMenfess
-        ? 'Yakin ingin menghapus menfess ini?'
-        : 'Yakin ingin menghapus komentar ini?'
-    );
+    console.log('TARGET:', {
+      table,
+      targetId,
+      isMenfess,
+    });
 
-    if (!confirmed) return;
+    console.log('MENGIRIM DELETE KE SUPABASE...');
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from(table)
       .delete()
-      .eq(idColumn, targetId);
+      .eq('id', targetId)
+      .select();
+
+    console.log('HASIL DELETE:', {
+      data,
+      error,
+    });
 
     if (error) {
-      console.error('Gagal menghapus konten:', error);
-      alert('Gagal menghapus konten.');
+      console.error('DELETE ERROR:', error);
+      alert(`Gagal menghapus: ${error.message}`);
       return;
     }
 
-    await updateReportStatus(report.id, 'resolved');
+    if (!data || data.length === 0) {
+      console.warn('DELETE TIDAK MENGHAPUS DATA APA PUN');
+
+      alert(
+        `Tidak ada ${isMenfess ? 'menfess' : 'komentar'} yang terhapus.`
+      );
+
+      return;
+    }
+
+    console.log('DELETE BERHASIL:', data);
 
     setReports((current) =>
       current.filter((item) => item.id !== report.id)
     );
+
+    setDeleteConfirmation(null);
+
+    alert('Berhasil dihapus!');
   }
 
   const [loading, setLoading] = useState(true);
@@ -87,6 +106,7 @@ function Admin() {
   const [approvedCount, setApprovedCount] = useState(0);
   const [approvedMenfess, setApprovedMenfess] = useState([]);
   const [approvedLoading, setApprovedLoading] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
 
   useEffect(() => {
     checkAdmin();
@@ -94,9 +114,9 @@ function Admin() {
 
   useEffect(() => {
     if (session) {
-      document.title = 'Moderation Dashboard · menfessfor/informatika';
+      document.title = 'Dashboard Moderasi · menfessfor';
     } else {
-      document.title = 'Sign in to Menfessfor';
+      document.title = 'Masuk ke Menfessfor';
     }
   }, [session]);
 
@@ -147,12 +167,63 @@ function Admin() {
     fetchApprovedMenfess();
   }
 
+  async function deleteMenfess(id) {
+    console.log('DELETE DIJALANKAN, ID:', id);
+
+    const { data, error } = await supabase
+      .from('menfess')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    console.log('HASIL DELETE:', {
+      data,
+      error,
+    });
+
+    if (error) {
+      console.error('DELETE ERROR:', error);
+      alert(`Gagal menghapus: ${error.message}`);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn('Tidak ada data yang terhapus.');
+      alert('Menfess tidak terhapus.');
+      return;
+    }
+
+    console.log('MENFESS BERHASIL DIHAPUS:', id);
+
+    setApprovedMenfess((current) =>
+      current.filter((item) => item.id !== id)
+    );
+
+    setApprovedCount((current) =>
+      Math.max(0, current - 1)
+    );
+  }
+
   async function fetchReports() {
     setReportsLoading(true);
 
     const { data, error } = await supabase
       .from('reports')
-      .select('*')
+      .select(`
+      *,
+      menfess:menfess_id (
+        id,
+        content,
+        category,
+        created_at
+      ),
+      comment:comment_id (
+        id,
+        content,
+        menfess_id,
+        created_at
+      )
+    `)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
@@ -230,12 +301,15 @@ function Admin() {
       return;
     }
 
-    // Hapus dari daftar pending setelah berhasil
+    // Hapus dari daftar pending
     setMenfess((current) =>
       current.filter((item) => item.id !== id)
     );
+
+    // Kalau disetujui, refresh data approved
     if (status === 'approved') {
-      fetchApprovedCount();
+      await fetchApprovedCount();
+      await fetchApprovedMenfess();
     }
   }
 
@@ -252,7 +326,7 @@ function Admin() {
             <Link to="/" className="admin-login-logo" aria-label="Menfessfor Homepage">
               <BrandLogo size={48} />
             </Link>
-            <h1 className="admin-login-title">Sign in to Menfessfor</h1>
+            <h1 className="admin-login-title">Masuk ke Menfessfor</h1>
             <p className="admin-login-subtitle">Panel Moderasi Khusus Pengurus</p>
           </div>
 
@@ -269,7 +343,7 @@ function Admin() {
             <form onSubmit={handleLogin} className="admin-login-form">
               <div className="admin-login-field">
                 <label htmlFor="admin-email" className="admin-login-label">
-                  Email address
+                  Alamat email
                 </label>
                 <input
                   id="admin-email"
@@ -284,7 +358,7 @@ function Admin() {
 
               <div className="admin-login-field">
                 <label htmlFor="admin-password" className="admin-login-label">
-                  Password
+                  Kata sandi
                 </label>
                 <input
                   id="admin-password"
@@ -302,7 +376,7 @@ function Admin() {
                 type="submit"
                 disabled={loggingIn}
               >
-                {loggingIn ? 'Signing in...' : 'Sign in'}
+                {loggingIn ? 'Sedang masuk...' : 'Masuk'}
               </button>
             </form>
           </div>
@@ -328,13 +402,13 @@ function Admin() {
               <div className="admin-header__breadcrumb">
                 <Link to="/" className="admin-header__repo-link">menfessfor</Link>
                 <span className="admin-header__separator">/</span>
-                <span className="admin-header__current">moderation</span>
+                <span className="admin-header__current">moderasi</span>
               </div>
               <div className="admin-header__title-wrap">
                 <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                   <path d="M8.533.133a1.749 1.749 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48v4.27c0 4.29 2.78 8.01 6.74 9.17a1.749 1.749 0 0 0 .52 0c3.96-1.16 6.74-4.88 6.74-9.17V3.48a1.75 1.75 0 0 0-1.217-1.667Zm-.614 1.44a.25.25 0 0 1 .162 0l5.25 1.68a.25.25 0 0 1 .169.227v4.27c0 3.56-2.29 6.64-5.5 7.63a.25.25 0 0 1-.16 0C4.79 14.43 2.5 11.35 2.5 7.75V3.48a.25.25 0 0 1 .169-.227Z" />
                 </svg>
-                <h1 className="admin-header__title">Moderation Dashboard</h1>
+                <h1 className="admin-header__title">Dashboard Moderasi</h1>
                 <span className="gh-label gh-label-akademik admin-header__badge">Moderator</span>
               </div>
               <p className="admin-header__desc">
@@ -356,7 +430,7 @@ function Admin() {
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                   <path d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25Zm10.44 3.97a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06l-2.25 2.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L13.19 10H6.75a.75.75 0 0 1 0-1.5h6.44l-1.47-1.47a.75.75 0 0 1 0-1.06Z" />
                 </svg>
-                Logout
+                Keluar
               </button>
             </div>
           </div>
@@ -372,7 +446,7 @@ function Admin() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5a.75.75 0 0 1-.22.53l-2.25 2.25a.75.75 0 0 1-1.06-1.06L6.5 8.19V4.75a.75.75 0 0 1 1.5 0Z" />
             </svg>
-            Pending Queue
+            Antrean Menunggu
             <span className="admin-tab__counter">{menfess.length}</span>
           </button>
 
@@ -384,7 +458,7 @@ function Admin() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
             </svg>
-            Approved Menfess
+            Menfess Disetujui
             <span className="admin-tab__counter">{approvedCount}</span>
           </button>
 
@@ -396,7 +470,7 @@ function Admin() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path d="M1.75 1.5a.75.75 0 0 0-.75.75v12a.75.75 0 0 0 1.5 0V9.25h3.284a2.25 2.25 0 0 1 1.77.863l.364.456a3.75 3.75 0 0 0 2.95 1.438H14a.75.75 0 0 0 .75-.75V3.5a.75.75 0 0 0-.75-.75H10.9a2.25 2.25 0 0 1-1.77-.863l-.364-.456A3.75 3.75 0 0 0 5.818 0H1.75Zm0 1.5h4.068c.683 0 1.343.277 1.82.772l.364.456A3.75 3.75 0 0 0 10.95 5.5H13.25v4.25h-2.3a2.25 2.25 0 0 1-1.77-.863l-.364-.456A3.75 3.75 0 0 0 5.818 7H2.5V3Z" />
             </svg>
-            Reports
+            Laporan
             <span className="admin-tab__counter">{reports.length}</span>
           </button>
         </div>
@@ -405,10 +479,10 @@ function Admin() {
           <div className="gh-box admin-queue-box">
             <div className="gh-box-header">
               <div className="admin-queue-header">
-                <input type="checkbox" disabled aria-label="Select all" />
+                <input type="checkbox" disabled aria-label="Pilih semua" />
                 <span>{menfess.length} menfess menunggu peninjauan</span>
               </div>
-              <span className="admin-queue-badge">Supabase Ready</span>
+              <span className="admin-queue-badge">Siap</span>
             </div>
 
             <div className="admin-queue-list">
@@ -443,7 +517,7 @@ function Admin() {
                     <div className="admin-queue-item__main">
                       <div className="admin-queue-item__meta">
                         <span className="gh-state gh-state-pending">
-                          Pending
+                          Menunggu
                         </span>
 
                         <span className={`gh-label ${getCategoryLabelClass(item.category)}`}>
@@ -470,7 +544,7 @@ function Admin() {
                         type="button"
                         onClick={() => updateStatus(item.id, 'approved')}
                       >
-                        Approve
+                        Setujui
                       </button>
 
                       <button
@@ -478,7 +552,7 @@ function Admin() {
                         type="button"
                         onClick={() => updateStatus(item.id, 'rejected')}
                       >
-                        Reject
+                        Tolak
                       </button>
                     </div>
                   </div>
@@ -497,7 +571,7 @@ function Admin() {
               </div>
 
               <span className="admin-queue-badge">
-                Published
+                Dipublikasikan
               </span>
             </div>
 
@@ -505,7 +579,7 @@ function Admin() {
               {approvedLoading && (
                 <div className="admin-queue-item">
                   <p className="admin-queue-item__preview">
-                    Memuat approved menfess...
+                    Memuat menfess disetujui...
                   </p>
                 </div>
               )}
@@ -524,7 +598,7 @@ function Admin() {
                     <div className="admin-queue-item__main">
                       <div className="admin-queue-item__meta">
                         <span className="gh-state gh-state-approved">
-                          Approved
+                          Disetujui
                         </span>
 
                         <span
@@ -551,32 +625,7 @@ function Admin() {
                       <button
                         className="gh-btn gh-btn-sm gh-btn-danger"
                         type="button"
-                        onClick={async () => {
-                          const confirmed = window.confirm(
-                            'Yakin ingin menghapus menfess ini?'
-                          );
-
-                          if (!confirmed) return;
-
-                          const { error } = await supabase
-                            .from('menfess')
-                            .delete()
-                            .eq('id', item.id);
-
-                          if (error) {
-                            console.error('Gagal menghapus menfess:', error);
-                            alert('Gagal menghapus menfess.');
-                            return;
-                          }
-
-                          setApprovedMenfess((current) =>
-                            current.filter((menfess) => menfess.id !== item.id)
-                          );
-
-                          setApprovedCount((current) =>
-                            Math.max(0, current - 1)
-                          );
-                        }}
+                        onClick={() => deleteMenfess(item.id)}
                       >
                         Hapus
                       </button>
@@ -595,7 +644,7 @@ function Admin() {
               </div>
 
               <span className="admin-queue-badge">
-                Supabase Ready
+                Siap
               </span>
             </div>
 
@@ -620,9 +669,10 @@ function Admin() {
                 reports.map((report) => (
                   <div className="admin-queue-item" key={report.id}>
                     <div className="admin-queue-item__main">
+
                       <div className="admin-queue-item__meta">
                         <span className="gh-state gh-state-pending">
-                          Report
+                          Laporan
                         </span>
 
                         <span className="admin-queue-item__id">
@@ -634,34 +684,100 @@ function Admin() {
                         </span>
                       </div>
 
-                      <p className="admin-queue-item__preview">
-                        <strong>
-                          {report.menfess_id
-                            ? `Menfess #${report.menfess_id}`
-                            : `Komentar #${report.comment_id}`}
-                        </strong>
-                      </p>
+                      {/* Report komentar */}
+                      {report.comment_id && report.comment && (
+                        <>
+                          <p className="admin-queue-item__preview">
+                            <strong>
+                              Komentar #{report.comment.id}
+                            </strong>
+                          </p>
+
+                          <p className="admin-queue-item__preview">
+                            "{report.comment.content}"
+                          </p>
+
+                          <Link
+                            to={`/menfess/${report.comment.menfess_id}`}
+                            className="admin-report-link"
+                          >
+                            Lihat Menfess #{report.comment.menfess_id} →
+                          </Link>
+                        </>
+                      )}
+
+                      {/* Report menfess */}
+                      {report.menfess_id && report.menfess && (
+                        <>
+                          <p className="admin-queue-item__preview">
+                            <strong>
+                              Menfess #{report.menfess.id}
+                            </strong>
+                          </p>
+
+                          <p className="admin-queue-item__preview">
+                            "{report.menfess.content}"
+                          </p>
+
+                          <Link
+                            to={`/menfess/${report.menfess.id}`}
+                            className="admin-report-link"
+                          >
+                            Lihat Menfess #{report.menfess.id} →
+                          </Link>
+                        </>
+                      )}
 
                       <p className="admin-queue-item__preview">
                         Alasan: "{report.reason}"
                       </p>
-                      <div className="admin-queue-item__actions">
-                        <button
-                          type="button"
-                          className="gh-btn gh-btn-sm"
-                          onClick={() => deleteReportedContent(report)}
-                        >
-                          Hapus
-                        </button>
 
-                        <button
-                          type="button"
-                          className="gh-btn gh-btn-sm"
-                          onClick={() => updateReportStatus(report.id, 'dismissed')}
-                        >
-                          Abaikan
-                        </button>
+                      <div className="admin-queue-item__actions">
+                        {deleteConfirmation === report.id ? (
+                          <>
+                            <span className="admin-delete-confirm-text">
+                              Yakin ingin menghapus?
+                            </span>
+
+                            <button
+                              type="button"
+                              className="gh-btn gh-btn-sm gh-btn-danger"
+                              onClick={() => deleteReportedContent(report)}
+                            >
+                              Ya, hapus
+                            </button>
+
+                            <button
+                              type="button"
+                              className="gh-btn gh-btn-sm"
+                              onClick={() => setDeleteConfirmation(null)}
+                            >
+                              Batal
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="gh-btn gh-btn-sm gh-btn-danger"
+                              onClick={() => setDeleteConfirmation(report.id)}
+                            >
+                              Hapus
+                            </button>
+
+                            <button
+                              type="button"
+                              className="gh-btn gh-btn-sm"
+                              onClick={() =>
+                                updateReportStatus(report.id, 'dismissed')
+                              }
+                            >
+                              Abaikan
+                            </button>
+                          </>
+                        )}
                       </div>
+
                     </div>
                   </div>
                 ))}
@@ -675,7 +791,7 @@ function Admin() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />
             </svg>
-            Kembali ke Discussions
+            Kembali ke Diskusi
           </Link>
         </div>
       </div>

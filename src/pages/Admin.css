@@ -391,3 +391,14 @@
   text-decoration: underline;
 }
 
+.admin-report-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-report-link:hover {
+  text-decoration: underline;
+}

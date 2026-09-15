@@ -1,22 +1,30 @@
 /* ============================================
-   GitHub Issue Comment Box
+   GitHub Issue Comment Box — Refined Block/Card
    ============================================ */
 
 .gh-timeline-comment {
   position: relative;
-  margin-bottom: var(--space-4);
+  width: 100%;
 }
 
 .gh-comment-box {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
   background-color: var(--color-canvas-default);
+  box-shadow: 0 1px 2px rgba(31, 35, 40, 0.04);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
+}
+
+.gh-comment-box:hover {
+  border-color: #bbc0c5;
 }
 
 .gh-comment-box__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-2);
   padding: 8px 16px;
   background-color: var(--color-canvas-subtle);
   border-bottom: 1px solid var(--color-border-default);
@@ -27,42 +35,83 @@
 .gh-comment-box__author {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Anonymous Commenter Avatar Indicator */
+.gh-comment-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(31, 35, 40, 0.06);
+}
+
+.gh-comment-avatar--author {
+  background-color: #fbefff;
+  color: #8250df;
+  border-color: rgba(210, 168, 255, 0.4);
 }
 
 .gh-comment-box__name {
   font-weight: 600;
   color: var(--color-fg-default);
+  font-size: var(--text-xs);
 }
 
 .gh-comment-box__id {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--color-fg-muted);
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+}
+
+.gh-comment-box__dot {
+  color: var(--color-fg-subtle);
+  font-size: 10px;
 }
 
 .gh-comment-box__action {
   color: var(--color-fg-muted);
+  font-size: var(--text-xs);
+}
+
+.gh-comment-box__actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .gh-comment-box__report-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 4px 6px;
   color: var(--color-fg-subtle);
   border-radius: var(--radius-sm);
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .gh-comment-box__report-btn:hover {
   color: var(--color-danger-fg);
   background-color: var(--color-danger-subtle);
+  border-color: rgba(255, 129, 130, 0.4);
 }
 
 .gh-comment-box__body {
-  padding: 16px;
+  padding: 14px 16px;
+  min-width: 0;
 }
 
 .gh-comment-box__text {
@@ -70,4 +119,32 @@
   line-height: 1.6;
   color: var(--color-fg-default);
   word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+  .gh-comment-box__header {
+    padding: 8px 12px;
+  }
+
+  .gh-comment-box__body {
+    padding: 12px;
+  }
+
+  .gh-comment-box__author {
+    gap: 6px;
+  }
+
+  .gh-comment-avatar {
+    width: 20px;
+    height: 20px;
+  }
+
+  .gh-comment-avatar svg {
+    width: 12px;
+    height: 12px;
+  }
 }

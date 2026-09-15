@@ -10,19 +10,30 @@ function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    document.title = 'Discussions · menfessfor/informatika';
+    document.title = 'Discussions · menfessfor';
 
     async function fetchMenfess() {
       const { data, error } = await supabase
         .from('menfess')
-        .select('*')
+        .select(`
+      *,
+      comments(count),
+      likes(count)
+    `)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Gagal mengambil menfess:', error);
         setError(error.message);
       } else {
-        setMenfess(data);
+        const menfessWithCounts = data.map((item) => ({
+          ...item,
+          comments_count: item.comments?.[0]?.count || 0,
+          likes: item.likes?.[0]?.count || 0,
+        }));
+
+        setMenfess(menfessWithCounts);
       }
 
       setLoading(false);
@@ -44,16 +55,14 @@ function Home() {
               <span>README.md</span>
             </div>
             <div className="gh-hero-box__tags">
-              <span className="gh-label gh-label-akademik">Informatika</span>
               <span className="gh-label">Anonim</span>
             </div>
           </div>
 
           <div className="gh-hero-box__body">
-            <h1 className="gh-hero-box__title">Menfessfor — Anonim Informatika</h1>
+            <h1 className="gh-hero-box__title">Menfessfor — Anonim</h1>
             <p className="gh-hero-box__desc">
-              Platform menfess anonim khusus mahasiswa Jurusan Informatika.
-              Sampaikan pesan, curhat, confess, atau diskusi perkuliahan tanpa perlu akun maupun login.
+              No names. No Pressure. Just say it.
             </p>
 
             <div className="gh-hero-box__actions">
@@ -80,7 +89,7 @@ function Home() {
               <svg width="16" height="16" viewBox="0 0 16 16" fill="#8250df" aria-hidden="true">
                 <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
               </svg>
-              <h2 className="gh-feed-header__title">{menfess.length} Discussions</h2>
+              <h2 className="gh-feed-header__title">{menfess.length} Diskusi</h2>
             </div>
             <span className="gh-feed-header__subtitle">Diurutkan berdasarkan terbaru</span>
           </div>
@@ -98,7 +107,7 @@ function Home() {
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--color-danger-fg)">
                   <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-.25-6.25a.75.75 0 0 0-1.5 0v3.5a.75.75 0 0 0 1.5 0v-3.5Z" />
                 </svg>
-                <span>Error: {error}</span>
+                <span>Terjadi kesalahan: {error}</span>
               </div>
             )}
 

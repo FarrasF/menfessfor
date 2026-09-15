@@ -49,13 +49,20 @@ function ReportModal({ isOpen, onClose, targetType = 'menfess', targetId }) {
           anonymous_id: anonymousId,
         };
 
+
     const { error } = await supabase
       .from('reports')
       .insert([reportData]);
 
     if (error) {
       console.error('Gagal mengirim laporan:', error);
-      alert('Laporan gagal dikirim.');
+      alert(`Laporan gagal dikirim: ${error.message}`);
+      return;
+    }
+
+    if (error) {
+      console.error('Gagal mengirim laporan:', error);
+      alert(`Laporan gagal dikirim: ${error.message}`);
       return;
     }
 
