@@ -46,6 +46,18 @@ function MenfessDetail() {
     fetchLikes();
   }, [id]);
 
+  useEffect(() => {
+    if (menfess) {
+      const anonNum = String(menfess.id).padStart(3, '0');
+      const snippet = menfess.content
+        ? (menfess.content.length > 28 ? menfess.content.slice(0, 28).trim() + '…' : menfess.content.trim())
+        : 'Menfess';
+      document.title = `${snippet} · Discussion #${anonNum} · menfessfor/informatika`;
+    } else {
+      document.title = 'Discussion · menfessfor/informatika';
+    }
+  }, [menfess]);
+
   function getAnonymousId() {
     let anonId = localStorage.getItem('anonymous_id');
 

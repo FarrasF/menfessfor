@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
@@ -21,6 +21,10 @@ function SubmitMenfess() {
   const [content, setContent] = useState('');
   const [activeTab, setActiveTab] = useState('write');
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    document.title = 'New Menfess · menfessfor/informatika';
+  }, []);
 
   const charCount = content.length;
   const isOverLimit = charCount > MAX_CHARS;

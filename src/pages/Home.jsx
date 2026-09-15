@@ -10,6 +10,8 @@ function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    document.title = 'Discussions · menfessfor/informatika';
+
     async function fetchMenfess() {
       const { data, error } = await supabase
         .from('menfess')

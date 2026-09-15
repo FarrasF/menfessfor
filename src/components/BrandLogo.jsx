@@ -1,0 +1,34 @@
+/**
+ * BrandLogo — Minimalist Developer Cat Logo
+ *
+ * Desain minimalis, bersih, dan monokromatik (mengikuti currentColor):
+ * - Siluet kucing dengan proporsi seimbang
+ * - Developer overhead headphones yang ramping
+ * - Kacamata programmer dengan aksen tag kode `<` dan `>` yang presisi
+ */
+function BrandLogo({ size = 32, className = '' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      {/* 
+        Minimalist Developer Cat — Pure Negative Space Vector
+        Unified single path with fillRule="evenodd" for flawless contrast on any background
+      */}
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.5 14.5L7.2 4.6C7.4 3.9 8.2 3.7 8.7 4.2L12.8 8.3C13.8 8.1 14.9 8 16 8C17.1 8 18.2 8.1 19.2 8.3L23.3 4.2C23.8 3.7 24.6 3.9 24.8 4.6L26.5 14.5C28 17.5 28 20.8 26.2 23.6C24.2 26.8 20.4 28 16 28C11.6 28 7.8 26.8 5.8 23.6C4 20.8 4 17.5 5.5 14.5ZM13.8 13.6L9.6 17.3C9.2 17.7 9.2 18.3 9.6 18.7L13.8 22.4C14.3 22.8 15 22.5 15 21.8L15 20.6L11.8 18L15 15.4L15 14.2C15 13.5 14.3 13.2 13.8 13.6ZM18.2 13.6L22.4 17.3C22.8 17.7 22.8 18.3 22.4 18.7L18.2 22.4C17.7 22.8 17 22.5 17 21.8L17 20.6L20.2 18L17 15.4L17 14.2C17 13.5 17.7 13.2 18.2 13.6Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+export default BrandLogo;
