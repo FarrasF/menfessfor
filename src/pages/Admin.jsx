@@ -633,30 +633,15 @@ function Admin() {
                         </span>
                       </div>
 
-                      <div className="admin-queue-item__meta-right">
-                        <Link
-                          to={`/menfess/${item.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="admin-queue-item__public-link"
-                          title="Buka halaman diskusi publik di tab baru"
-                        >
-                          Buka Diskusi #{item.id}
-                          <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
-                            <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.75.75 0 0 1 .75.75v4.146a.75.75 0 0 1-1.28.53l-1.074-1.073-4.72 4.72a.75.75 0 0 1-1.06-1.06l4.72-4.72-1.073-1.074A.75.75 0 0 1 10.604 1Z"></path>
-                          </svg>
-                        </Link>
-
-                        <span className="admin-queue-item__time">
-                          <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
-                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5l2.25 1.5a.75.75 0 1 1-.83 1.25l-2.67-1.78A.75.75 0 0 1 7 8.5V4.75a.75.75 0 0 1 1.5 0Z"></path>
-                          </svg>
-                          {new Date(item.created_at).toLocaleString('id-ID', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                          })}
-                        </span>
-                      </div>
+                      <span className="admin-queue-item__time">
+                        <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
+                          <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.5l2.25 1.5a.75.75 0 1 1-.83 1.25l-2.67-1.78A.75.75 0 0 1 7 8.5V4.75a.75.75 0 0 1 1.5 0Z"></path>
+                        </svg>
+                        {new Date(item.created_at).toLocaleString('id-ID', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                      </span>
                     </div>
 
                     <div className="admin-queue-item__preview">
@@ -692,32 +677,18 @@ function Admin() {
                           </div>
                         </div>
                       ) : (
-                        <div className="admin-queue-actions-row">
-                          <Link
-                            to={`/menfess/${item.id}`}
-                            className="gh-btn gh-btn-sm"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
-                              <path d="M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0ZM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM5 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm6 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-3 3a3 3 0 0 0 2.83-2H6.17A3 3 0 0 0 8 11Z"></path>
-                            </svg>
-                            Lihat Diskusi
-                          </Link>
-
-                          <button
-                            type="button"
-                            className="gh-btn gh-btn-sm gh-btn-danger"
-                            onClick={() =>
-                              setDeleteConfirmation(`approved-${item.id}`)
-                            }
-                          >
-                            <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
-                              <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.15l-.66 6.6A1.75 1.75 0 0 1 10.595 15H5.405a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path>
-                            </svg>
-                            Hapus
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          className="gh-btn gh-btn-sm gh-btn-danger"
+                          onClick={() =>
+                            setDeleteConfirmation(`approved-${item.id}`)
+                          }
+                        >
+                          <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.15l-.66 6.6A1.75 1.75 0 0 1 10.595 15H5.405a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path>
+                          </svg>
+                          Hapus
+                        </button>
                       )}
                     </div>
                   </div>
@@ -823,14 +794,12 @@ function Admin() {
                           {targetMenfessId && (
                             <Link
                               to={`/menfess/${targetMenfessId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
                               className="admin-report-target-box__link"
-                              title="Buka halaman diskusi ini di tab baru"
+                              title="Buka halaman diskusi"
                             >
                               Buka Diskusi #{targetMenfessId}
                               <svg aria-hidden="true" height="12" viewBox="0 0 16 16" version="1.1" width="12" fill="currentColor">
-                                <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.75.75 0 0 1 .75.75v4.146a.75.75 0 0 1-1.28.53l-1.074-1.073-4.72 4.72a.75.75 0 0 1-1.06-1.06l4.72-4.72-1.073-1.074A.75.75 0 0 1 10.604 1Z"></path>
+                                <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
                               </svg>
                             </Link>
                           )}
