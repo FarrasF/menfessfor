@@ -51,6 +51,29 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
   const [activePreview, setActivePreview] = useState(preview || null);
   const shouldPlayAfterFetch = useRef(false);
 
+  const isSeekingRef = useRef(false);
+
+  // Global pointer/mouse up listener to ensure seeking state resets even if pointer leaves slider
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      if (isSeekingRef.current) {
+        isSeekingRef.current = false;
+        const audio = audioRef.current;
+        const slider = sliderRef.current;
+        if (audio && slider && audio.duration && isFinite(audio.duration)) {
+          audio.currentTime = (Number(slider.value) / 100) * audio.duration;
+        }
+      }
+    };
+
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    window.addEventListener('mouseup', handleGlobalPointerUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp);
+      window.removeEventListener('mouseup', handleGlobalPointerUp);
+    };
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -90,9 +113,11 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
       const audio = audioRef.current;
       const slider = sliderRef.current;
       if (audio && audio.duration && !audio.paused && slider) {
-        const pct = (audio.currentTime / audio.duration) * 100;
-        slider.value = pct;
-        slider.style.setProperty('--progress', `${pct}%`);
+        if (!isSeekingRef.current) {
+          const pct = (audio.currentTime / audio.duration) * 100;
+          slider.value = pct;
+          slider.style.setProperty('--progress', `${pct}%`);
+        }
         animId = requestAnimationFrame(updateSmoothProgress);
       }
     };
@@ -147,15 +172,20 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
     }
   };
 
+  const applySeek = (val) => {
+    const audio = audioRef.current;
+    if (sliderRef.current) {
+      sliderRef.current.style.setProperty('--progress', `${val}%`);
+    }
+    if (audio && audio.duration && isFinite(audio.duration)) {
+      audio.currentTime = (val / 100) * audio.duration;
+    }
+  };
+
   const handleSeek = (e) => {
     e.stopPropagation();
-    const audio = audioRef.current;
-    if (!audio || !audio.duration) return;
-    const newProgress = Number(e.target.value);
-    audio.currentTime = (newProgress / 100) * audio.duration;
-    if (sliderRef.current) {
-      sliderRef.current.style.setProperty('--progress', `${newProgress}%`);
-    }
+    const val = Number(e.target.value);
+    applySeek(val);
   };
 
   const audioSrc = activePreview || preview;
@@ -163,9 +193,22 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
   return (
     <div
       className="gh-card__music"
-      onClick={(e) => {
+      draggable={false}
+      onDragStart={(e) => {
         e.preventDefault();
         e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (e.target.tagName !== 'INPUT') {
+          e.preventDefault();
+        }
       }}
     >
       {audioSrc && (
@@ -219,6 +262,7 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
           alt={title || 'Cover lagu'}
           className="gh-card__music-cover"
           loading="lazy"
+          draggable={false}
         />
       ) : (
         <div className="gh-card__music-cover gh-card__music-cover--placeholder">
@@ -236,6 +280,13 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
           {artist && (
             <span className="gh-card__music-artist" title={artist}>
               • {artist}
+            </span>
+          )}
+          {isPlaying && (
+            <span className="gh-music-eq" aria-label="Sedang diputar">
+              <span className="gh-music-eq__bar" />
+              <span className="gh-music-eq__bar" />
+              <span className="gh-music-eq__bar" />
             </span>
           )}
         </div>
@@ -273,13 +324,34 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
                 max="100"
                 step="0.1"
                 defaultValue="0"
-                onChange={handleSeek}
-                onClick={(e) => {
+                draggable={false}
+                onDragStart={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  isSeekingRef.current = true;
+                }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  isSeekingRef.current = true;
+                }}
+                onInput={handleSeek}
+                onChange={handleSeek}
+                onPointerUp={(e) => {
+                  e.stopPropagation();
+                  isSeekingRef.current = false;
+                  applySeek(Number(e.target.value));
+                }}
+                onMouseUp={(e) => {
+                  e.stopPropagation();
+                  isSeekingRef.current = false;
+                  applySeek(Number(e.target.value));
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
                 className="gh-card__music-slider"
                 style={{ '--progress': '0%' }}
                 aria-label="Seek preview lagu"
@@ -312,7 +384,17 @@ function MenfessCard({
   const hasSong = Boolean(song_title || song_id || song_preview);
 
   return (
-    <Link to={`/menfess/${id}`} className="gh-card" aria-label={`Baca diskusi anonim #${anonId}`}>
+    <Link
+      to={`/menfess/${id}`}
+      className="gh-card"
+      draggable={false}
+      onDragStart={(e) => {
+        if (e.target.closest('.gh-card__music')) {
+          e.preventDefault();
+        }
+      }}
+      aria-label={`Baca diskusi anonim #${anonId}`}
+    >
       {/* GitHub Discussion Purple Bubble Icon */}
       <div className="gh-card__icon" title="Diskusi">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="#8250df" aria-hidden="true">

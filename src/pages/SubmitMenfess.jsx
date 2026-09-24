@@ -24,6 +24,29 @@ function MiniAudioPlayer({ src, currentAudioRef, className = '' }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
 
+  const isSeekingRef = useRef(false);
+
+  // Global pointer/mouse up listener to ensure seeking state resets even if pointer leaves slider
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      if (isSeekingRef.current) {
+        isSeekingRef.current = false;
+        const audio = audioRef.current;
+        const slider = sliderRef.current;
+        if (audio && slider && audio.duration && isFinite(audio.duration)) {
+          audio.currentTime = (Number(slider.value) / 100) * audio.duration;
+        }
+      }
+    };
+
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    window.addEventListener('mouseup', handleGlobalPointerUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp);
+      window.removeEventListener('mouseup', handleGlobalPointerUp);
+    };
+  }, []);
+
   useEffect(() => {
     setIsPlaying(false);
     setIsBuffering(false);
@@ -43,9 +66,11 @@ function MiniAudioPlayer({ src, currentAudioRef, className = '' }) {
       const audio = audioRef.current;
       const slider = sliderRef.current;
       if (audio && audio.duration && !audio.paused && slider) {
-        const pct = (audio.currentTime / audio.duration) * 100;
-        slider.value = pct;
-        slider.style.setProperty('--progress', `${pct}%`);
+        if (!isSeekingRef.current) {
+          const pct = (audio.currentTime / audio.duration) * 100;
+          slider.value = pct;
+          slider.style.setProperty('--progress', `${pct}%`);
+        }
         animId = requestAnimationFrame(updateSmoothProgress);
       }
     };
@@ -77,14 +102,19 @@ function MiniAudioPlayer({ src, currentAudioRef, className = '' }) {
     }
   };
 
-  const handleSeek = (e) => {
+  const applySeek = (val) => {
     const audio = audioRef.current;
-    if (!audio || !audio.duration) return;
-    const newProgress = Number(e.target.value);
-    audio.currentTime = (newProgress / 100) * audio.duration;
     if (sliderRef.current) {
-      sliderRef.current.style.setProperty('--progress', `${newProgress}%`);
+      sliderRef.current.style.setProperty('--progress', `${val}%`);
     }
+    if (audio && audio.duration && isFinite(audio.duration)) {
+      audio.currentTime = (val / 100) * audio.duration;
+    }
+  };
+
+  const handleSeek = (e) => {
+    const val = Number(e.target.value);
+    applySeek(val);
   };
 
   return (
@@ -157,7 +187,22 @@ function MiniAudioPlayer({ src, currentAudioRef, className = '' }) {
           max="100"
           step="0.1"
           defaultValue="0"
+          onMouseDown={() => {
+            isSeekingRef.current = true;
+          }}
+          onPointerDown={() => {
+            isSeekingRef.current = true;
+          }}
+          onInput={handleSeek}
           onChange={handleSeek}
+          onMouseUp={(e) => {
+            isSeekingRef.current = false;
+            applySeek(Number(e.target.value));
+          }}
+          onPointerUp={(e) => {
+            isSeekingRef.current = false;
+            applySeek(Number(e.target.value));
+          }}
           className="mini-audio-player__slider"
           style={{ '--progress': '0%' }}
           aria-label="Seek progress"

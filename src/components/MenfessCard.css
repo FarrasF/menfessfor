@@ -90,31 +90,33 @@
 .gh-card__music {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
+  gap: 11px;
+  padding: 7px 11px;
   background-color: var(--color-canvas-subtle);
   border: 1px solid var(--color-border-subtle, var(--color-border-default));
-  border-radius: var(--radius-md);
-  margin-top: 2px;
+  border-radius: var(--radius-lg, 8px);
+  margin-top: 4px;
   margin-bottom: 2px;
   max-width: 440px;
   width: 100%;
   box-sizing: border-box;
   cursor: default;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .gh-card:hover .gh-card__music {
   border-color: var(--color-border-default);
   background-color: var(--color-canvas-default);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .gh-card__music-cover {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--color-border-subtle, rgba(0, 0, 0, 0.08));
 }
 
@@ -131,15 +133,15 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .gh-card__music-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   min-width: 0;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .gh-card__music-title {
@@ -149,6 +151,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .gh-card__music-artist {
@@ -168,8 +171,8 @@
 }
 
 .gh-card__music-play-btn {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-full);
   background-color: transparent;
   color: var(--color-fg-muted);
@@ -184,7 +187,7 @@
   -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none;
   user-select: none;
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), transform 0.12s ease;
 }
 
 .gh-card__music-play-btn:focus,
@@ -197,13 +200,13 @@
 .gh-card__music-play-btn:hover {
   background-color: rgba(140, 149, 159, 0.2);
   color: var(--color-fg-default);
-  border: none;
+  transform: scale(1.08);
 }
 
 .gh-card__music-play-btn:active {
   background-color: rgba(140, 149, 159, 0.32);
   color: var(--color-fg-default);
-  border: none;
+  transform: scale(0.95);
 }
 
 .gh-card__music-track {
@@ -212,15 +215,15 @@
   display: flex;
   align-items: center;
   min-width: 40px;
-  height: 12px;
+  height: 14px;
 }
 
 .gh-card__music-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 3px;
-  background: var(--color-border-default);
+  height: 14px;
+  background: transparent;
   border-radius: var(--radius-full);
   outline: none;
   cursor: pointer;
@@ -243,18 +246,21 @@
 .gh-card__music-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--color-fg-default);
   border: none;
   cursor: pointer;
-  margin-top: -2.5px;
+  margin-top: -3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   opacity: 0;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
-.gh-card__music:hover .gh-card__music-slider::-webkit-slider-thumb {
+.gh-card__music:hover .gh-card__music-slider::-webkit-slider-thumb,
+.gh-card__music-slider:active::-webkit-slider-thumb,
+.gh-card__music-slider:focus-visible::-webkit-slider-thumb {
   opacity: 1;
 }
 
@@ -272,17 +278,20 @@
 }
 
 .gh-card__music-slider::-moz-range-thumb {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--color-fg-default);
   border: none;
   cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
 
-.gh-card__music:hover .gh-card__music-slider::-moz-range-thumb {
+.gh-card__music:hover .gh-card__music-slider::-moz-range-thumb,
+.gh-card__music-slider:active::-moz-range-thumb,
+.gh-card__music-slider:focus-visible::-moz-range-thumb {
   opacity: 1;
 }
 

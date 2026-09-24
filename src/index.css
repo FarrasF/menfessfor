@@ -489,3 +489,47 @@ img {
   display: block;
   flex-shrink: 0;
 }
+
+/* --- Music Playing Equalizer Wave --- */
+.gh-music-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+  margin-left: 5px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.gh-music-eq__bar {
+  width: 2px;
+  background-color: var(--color-fg-muted);
+  border-radius: 1px;
+  animation: ghEqBounce 0.8s ease-in-out infinite alternate;
+}
+
+.gh-music-eq__bar:nth-child(1) {
+  height: 4px;
+  animation-duration: 0.5s;
+}
+
+.gh-music-eq__bar:nth-child(2) {
+  height: 10px;
+  animation-duration: 0.8s;
+  animation-delay: 0.15s;
+}
+
+.gh-music-eq__bar:nth-child(3) {
+  height: 6px;
+  animation-duration: 0.65s;
+  animation-delay: 0.3s;
+}
+
+@keyframes ghEqBounce {
+  0% {
+    height: 3px;
+  }
+  100% {
+    height: 10px;
+  }
+}
