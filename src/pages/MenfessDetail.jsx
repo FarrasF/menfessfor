@@ -12,16 +12,20 @@ import './MenfessDetail.css';
  */
 function DetailMusicPlayer({ cover, title, artist, preview }) {
   const audioRef = useRef(null);
+  const sliderRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
 
-  // Smooth 60fps progress update loop
+  // High performance smooth 60fps progress update - Direct DOM mutation (Zero React re-renders!)
   useEffect(() => {
     let animId;
     const updateSmoothProgress = () => {
       const audio = audioRef.current;
-      if (audio && audio.duration && !audio.paused) {
-        setProgress((audio.currentTime / audio.duration) * 100);
+      const slider = sliderRef.current;
+      if (audio && audio.duration && !audio.paused && slider) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        slider.value = pct;
+        slider.style.setProperty('--progress', `${pct}%`);
         animId = requestAnimationFrame(updateSmoothProgress);
       }
     };
@@ -50,7 +54,11 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play().catch((err) => console.error('Audio play error:', err));
+      setIsBuffering(true);
+      audio.play().catch((err) => {
+        setIsBuffering(false);
+        console.error('Audio play error:', err);
+      });
     }
   };
 
@@ -59,7 +67,9 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
     if (!audio || !audio.duration) return;
     const newProgress = Number(e.target.value);
     audio.currentTime = (newProgress / 100) * audio.duration;
-    setProgress(newProgress);
+    if (sliderRef.current) {
+      sliderRef.current.style.setProperty('--progress', `${newProgress}%`);
+    }
   };
 
   return (
@@ -68,7 +78,13 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
         <audio
           ref={audioRef}
           src={preview}
-          preload="none"
+          preload="metadata"
+          onWaiting={() => setIsBuffering(true)}
+          onPlaying={() => {
+            setIsBuffering(false);
+            setIsPlaying(true);
+          }}
+          onCanPlay={() => setIsBuffering(false)}
           onPlay={(e) => {
             const allAudios = document.querySelectorAll('audio');
             allAudios.forEach((a) => {
@@ -78,11 +94,19 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
             });
             setIsPlaying(true);
           }}
-          onPause={() => setIsPlaying(false)}
+          onPause={() => {
+            setIsBuffering(false);
+            setIsPlaying(false);
+          }}
           onEnded={() => {
             setIsPlaying(false);
-            setProgress(0);
+            setIsBuffering(false);
+            if (sliderRef.current) {
+              sliderRef.current.value = 0;
+              sliderRef.current.style.setProperty('--progress', '0%');
+            }
           }}
+          onError={() => setIsBuffering(false)}
         />
       )}
 
@@ -122,7 +146,12 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
               aria-label={isPlaying ? 'Jeda preview' : 'Putar preview'}
               title={isPlaying ? 'Jeda' : 'Putar'}
             >
-              {isPlaying ? (
+              {isBuffering ? (
+                <svg className="gh-music-spinner" width="10" height="10" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+                  <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              ) : isPlaying ? (
                 <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Zm5 0a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Z" />
                 </svg>
@@ -135,14 +164,15 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
 
             <div className="menfess-music__track">
               <input
+                ref={sliderRef}
                 type="range"
                 min="0"
                 max="100"
                 step="0.1"
-                value={progress || 0}
+                defaultValue="0"
                 onChange={handleSeek}
                 className="menfess-music__slider"
-                style={{ '--progress': `${progress || 0}%` }}
+                style={{ '--progress': '0%' }}
                 aria-label="Seek preview lagu"
               />
             </div>

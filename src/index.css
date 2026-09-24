@@ -477,3 +477,15 @@ img {
     padding-bottom: var(--space-8);
   }
 }
+
+/* --- Music Buffering Spinner --- */
+@keyframes ghMusicSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.gh-music-spinner {
+  animation: ghMusicSpin 0.75s linear infinite;
+  display: block;
+  flex-shrink: 0;
+}

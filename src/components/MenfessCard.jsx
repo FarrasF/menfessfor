@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getMusicById } from '../lib/music';
 import './MenfessCard.css';
 
 /**
@@ -42,18 +43,56 @@ function getCategoryLabelClass(category) {
 /**
  * Minimalist Music Player inside Menfess Card
  */
-function CardMusicPlayer({ cover, title, artist, preview }) {
+function CardMusicPlayer({ songId, cover, title, artist, preview }) {
   const audioRef = useRef(null);
+  const sliderRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [activePreview, setActivePreview] = useState(preview || null);
+  const shouldPlayAfterFetch = useRef(false);
 
-  // Smooth 60fps progress update loop
+  useEffect(() => {
+    let isMounted = true;
+
+    if (songId) {
+      getMusicById(songId)
+        .then((song) => {
+          if (isMounted && song?.preview) {
+            setActivePreview(song.preview);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to get fresh preview for song:', songId, err);
+        });
+    } else if (preview) {
+      setActivePreview(preview);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [songId, preview]);
+
+  useEffect(() => {
+    if (shouldPlayAfterFetch.current && activePreview && audioRef.current) {
+      shouldPlayAfterFetch.current = false;
+      audioRef.current.play().catch((err) => {
+        setIsBuffering(false);
+        console.error('Audio play error:', err);
+      });
+    }
+  }, [activePreview]);
+
+  // High performance smooth 60fps progress update - Direct DOM mutation (Zero React re-renders!)
   useEffect(() => {
     let animId;
     const updateSmoothProgress = () => {
       const audio = audioRef.current;
-      if (audio && audio.duration && !audio.paused) {
-        setProgress((audio.currentTime / audio.duration) * 100);
+      const slider = sliderRef.current;
+      if (audio && audio.duration && !audio.paused && slider) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        slider.value = pct;
+        slider.style.setProperty('--progress', `${pct}%`);
         animId = requestAnimationFrame(updateSmoothProgress);
       }
     };
@@ -85,14 +124,26 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play().catch((err) => console.error('Audio play error:', err));
-    }
-  };
+      if (!activePreview && songId) {
+        shouldPlayAfterFetch.current = true;
+        setIsBuffering(true);
+        getMusicById(songId)
+          .then((song) => {
+            if (song?.preview) {
+              setActivePreview(song.preview);
+            } else {
+              setIsBuffering(false);
+            }
+          })
+          .catch(() => setIsBuffering(false));
+        return;
+      }
 
-  const handleTimeUpdate = () => {
-    const audio = audioRef.current;
-    if (audio && audio.duration) {
-      setProgress((audio.currentTime / audio.duration) * 100);
+      setIsBuffering(true);
+      audio.play().catch((err) => {
+        setIsBuffering(false);
+        console.error('Audio play error:', err);
+      });
     }
   };
 
@@ -102,8 +153,12 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
     if (!audio || !audio.duration) return;
     const newProgress = Number(e.target.value);
     audio.currentTime = (newProgress / 100) * audio.duration;
-    setProgress(newProgress);
+    if (sliderRef.current) {
+      sliderRef.current.style.setProperty('--progress', `${newProgress}%`);
+    }
   };
+
+  const audioSrc = activePreview || preview;
 
   return (
     <div
@@ -113,11 +168,17 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
         e.stopPropagation();
       }}
     >
-      {preview && (
+      {audioSrc && (
         <audio
           ref={audioRef}
-          src={preview}
-          preload="none"
+          src={audioSrc}
+          preload="metadata"
+          onWaiting={() => setIsBuffering(true)}
+          onPlaying={() => {
+            setIsBuffering(false);
+            setIsPlaying(true);
+          }}
+          onCanPlay={() => setIsBuffering(false)}
           onPlay={(e) => {
             const allAudios = document.querySelectorAll('audio');
             allAudios.forEach((a) => {
@@ -127,12 +188,28 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
             });
             setIsPlaying(true);
           }}
-          onPause={() => setIsPlaying(false)}
+          onPause={() => {
+            setIsBuffering(false);
+            setIsPlaying(false);
+          }}
           onEnded={() => {
             setIsPlaying(false);
-            setProgress(0);
+            setIsBuffering(false);
+            if (sliderRef.current) {
+              sliderRef.current.value = 0;
+              sliderRef.current.style.setProperty('--progress', '0%');
+            }
           }}
-          onTimeUpdate={handleTimeUpdate}
+          onError={() => {
+            setIsBuffering(false);
+            if (songId) {
+              getMusicById(songId).then((song) => {
+                if (song?.preview && song.preview !== activePreview) {
+                  setActivePreview(song.preview);
+                }
+              });
+            }
+          }}
         />
       )}
 
@@ -163,7 +240,7 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
           )}
         </div>
 
-        {preview && (
+        {(audioSrc || songId) && (
           <div className="gh-card__music-controls">
             <button
               type="button"
@@ -172,7 +249,12 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
               aria-label={isPlaying ? 'Jeda preview' : 'Putar preview'}
               title={isPlaying ? 'Jeda' : 'Putar'}
             >
-              {isPlaying ? (
+              {isBuffering ? (
+                <svg className="gh-music-spinner" width="10" height="10" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+                  <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              ) : isPlaying ? (
                 <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Zm5 0a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Z" />
                 </svg>
@@ -185,11 +267,12 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
 
             <div className="gh-card__music-track">
               <input
+                ref={sliderRef}
                 type="range"
                 min="0"
                 max="100"
                 step="0.1"
-                value={progress || 0}
+                defaultValue="0"
                 onChange={handleSeek}
                 onClick={(e) => {
                   e.preventDefault();
@@ -198,7 +281,7 @@ function CardMusicPlayer({ cover, title, artist, preview }) {
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
                 className="gh-card__music-slider"
-                style={{ '--progress': `${progress || 0}%` }}
+                style={{ '--progress': '0%' }}
                 aria-label="Seek preview lagu"
               />
             </div>
@@ -226,7 +309,7 @@ function MenfessCard({
   const anonId = String(id).padStart(3, '0');
   const safeLikes = likes ?? 0;
   const safeComments = comments_count ?? 0;
-  const hasSong = Boolean(song_title || song_preview);
+  const hasSong = Boolean(song_title || song_id || song_preview);
 
   return (
     <Link to={`/menfess/${id}`} className="gh-card" aria-label={`Baca diskusi anonim #${anonId}`}>
@@ -249,6 +332,7 @@ function MenfessCard({
         {/* Music Player Row if song exists */}
         {hasSong && (
           <CardMusicPlayer
+            songId={song_id}
             cover={song_cover}
             title={song_title}
             artist={song_artist}
