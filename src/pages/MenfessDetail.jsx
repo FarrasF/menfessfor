@@ -8,61 +8,13 @@ import { getMusicById } from '../lib/music';
 import './MenfessDetail.css';
 
 /**
- * Minimalist Music Player inside Menfess Detail
+ * Minimalist Music Box inside Menfess Detail
+ * Click-to-play, matching the search list style
  */
-function DetailMusicPlayer({ cover, title, artist, preview }) {
+function DetailMusicPlayer({ cover, title, artist, album, preview }) {
   const audioRef = useRef(null);
-  const sliderRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
-
-  const isSeekingRef = useRef(false);
-
-  // Global pointer/mouse up listener to ensure seeking state resets even if pointer leaves slider
-  useEffect(() => {
-    const handleGlobalPointerUp = () => {
-      if (isSeekingRef.current) {
-        isSeekingRef.current = false;
-        const audio = audioRef.current;
-        const slider = sliderRef.current;
-        if (audio && slider && audio.duration && isFinite(audio.duration)) {
-          audio.currentTime = (Number(slider.value) / 100) * audio.duration;
-        }
-      }
-    };
-
-    window.addEventListener('pointerup', handleGlobalPointerUp);
-    window.addEventListener('mouseup', handleGlobalPointerUp);
-    return () => {
-      window.removeEventListener('pointerup', handleGlobalPointerUp);
-      window.removeEventListener('mouseup', handleGlobalPointerUp);
-    };
-  }, []);
-
-  // High performance smooth 60fps progress update - Direct DOM mutation (Zero React re-renders!)
-  useEffect(() => {
-    let animId;
-    const updateSmoothProgress = () => {
-      const audio = audioRef.current;
-      const slider = sliderRef.current;
-      if (audio && audio.duration && !audio.paused && slider) {
-        if (!isSeekingRef.current) {
-          const pct = (audio.currentTime / audio.duration) * 100;
-          slider.value = pct;
-          slider.style.setProperty('--progress', `${pct}%`);
-        }
-        animId = requestAnimationFrame(updateSmoothProgress);
-      }
-    };
-
-    if (isPlaying) {
-      animId = requestAnimationFrame(updateSmoothProgress);
-    }
-
-    return () => {
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, [isPlaying]);
 
   useEffect(() => {
     return () => {
@@ -87,28 +39,25 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
     }
   };
 
-  const applySeek = (val) => {
-    const audio = audioRef.current;
-    if (sliderRef.current) {
-      sliderRef.current.style.setProperty('--progress', `${val}%`);
-    }
-    if (audio && audio.duration && isFinite(audio.duration)) {
-      audio.currentTime = (val / 100) * audio.duration;
-    }
-  };
-
-  const handleSeek = (e) => {
-    const val = Number(e.target.value);
-    applySeek(val);
-  };
-
   return (
-    <div className="menfess-music">
+    <div
+      className={`menfess-music ${isPlaying ? 'menfess-music--playing' : ''}`}
+      onClick={togglePlay}
+      title={isPlaying ? 'Klik untuk jeda musik' : 'Klik untuk putar preview musik'}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          togglePlay();
+        }
+      }}
+    >
       {preview && (
         <audio
           ref={audioRef}
           src={preview}
-          preload="metadata"
+          preload="none"
           onWaiting={() => setIsBuffering(true)}
           onPlaying={() => {
             setIsBuffering(false);
@@ -131,105 +80,68 @@ function DetailMusicPlayer({ cover, title, artist, preview }) {
           onEnded={() => {
             setIsPlaying(false);
             setIsBuffering(false);
-            if (sliderRef.current) {
-              sliderRef.current.value = 0;
-              sliderRef.current.style.setProperty('--progress', '0%');
-            }
           }}
           onError={() => setIsBuffering(false)}
         />
       )}
 
-      {cover ? (
-        <img
-          src={cover}
-          alt={title || 'Cover lagu'}
-          className="menfess-music__cover"
-          loading="lazy"
-        />
-      ) : (
-        <div className="menfess-music__cover menfess-music__cover--placeholder">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12 2v8.5a2.5 2.5 0 1 1-2-2.45V4.25l-6 1.5v6.75a2.5 2.5 0 1 1-2-2.45V3.5a1 1 0 0 1 .76-.97l8-2A1 1 0 0 1 12 2Z" />
-          </svg>
-        </div>
-      )}
+      {/* Album Cover with Play/Equalizer State */}
+      <div className="menfess-music__cover-wrap">
+        {cover ? (
+          <img
+            src={cover}
+            alt={title || 'Cover lagu'}
+            className="menfess-music__cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="menfess-music__cover menfess-music__cover--placeholder">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12 2v8.5a2.5 2.5 0 1 1-2-2.45V4.25l-6 1.5v6.75a2.5 2.5 0 1 1-2-2.45V3.5a1 1 0 0 1 .76-.97l8-2A1 1 0 0 1 12 2Z" />
+            </svg>
+          </div>
+        )}
 
-      <div className="menfess-music__body">
-        <div className="menfess-music__header">
+        {isPlaying ? (
+          <div className="menfess-music__playing-overlay">
+            {isBuffering ? (
+              <svg className="gh-music-spinner" width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="#fff" strokeWidth="2.5" strokeOpacity="0.25" />
+                <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <span className="gh-music-eq gh-music-eq--compact">
+                <span className="gh-music-eq__bar" />
+                <span className="gh-music-eq__bar" />
+                <span className="gh-music-eq__bar" />
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="menfess-music__hover-overlay">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="#ffffff">
+              <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Song Details */}
+      <div className="menfess-music__details">
+        <div className="menfess-music__title-row">
           <span className="menfess-music__title" title={title}>
             {title}
           </span>
-          {artist && (
-            <span className="menfess-music__artist" title={artist}>
-              • {artist}
-            </span>
-          )}
-          {isPlaying && (
-            <span className="gh-music-eq" aria-label="Sedang diputar">
-              <span className="gh-music-eq__bar" />
-              <span className="gh-music-eq__bar" />
-              <span className="gh-music-eq__bar" />
-            </span>
+        </div>
+        <div className="menfess-music__subtitle">
+          <span>{artist}</span>
+          {album && (
+            <>
+              <span className="menfess-music__dot">•</span>
+              <span>{album}</span>
+            </>
           )}
         </div>
-
-        {preview && (
-          <div className="menfess-music__controls">
-            <button
-              type="button"
-              className="menfess-music__play-btn"
-              onClick={togglePlay}
-              aria-label={isPlaying ? 'Jeda preview' : 'Putar preview'}
-              title={isPlaying ? 'Jeda' : 'Putar'}
-            >
-              {isBuffering ? (
-                <svg className="gh-music-spinner" width="10" height="10" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
-                  <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                </svg>
-              ) : isPlaying ? (
-                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Zm5 0a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Z" />
-                </svg>
-              ) : (
-                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
-                </svg>
-              )}
-            </button>
-
-            <div className="menfess-music__track">
-              <input
-                ref={sliderRef}
-                type="range"
-                min="0"
-                max="100"
-                step="0.1"
-                defaultValue="0"
-                onMouseDown={() => {
-                  isSeekingRef.current = true;
-                }}
-                onPointerDown={() => {
-                  isSeekingRef.current = true;
-                }}
-                onInput={handleSeek}
-                onChange={handleSeek}
-                onMouseUp={(e) => {
-                  isSeekingRef.current = false;
-                  applySeek(Number(e.target.value));
-                }}
-                onPointerUp={(e) => {
-                  isSeekingRef.current = false;
-                  applySeek(Number(e.target.value));
-                }}
-                className="menfess-music__slider"
-                style={{ '--progress': '0%' }}
-                aria-label="Seek preview lagu"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -583,6 +495,7 @@ function MenfessDetail() {
                         cover={menfess.song_cover}
                         title={menfess.song_title}
                         artist={menfess.song_artist}
+                        album={menfess.song_album}
                         preview={freshPreview}
                       />
                     )}

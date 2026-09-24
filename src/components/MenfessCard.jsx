@@ -41,38 +41,15 @@ function getCategoryLabelClass(category) {
 }
 
 /**
- * Minimalist Music Player inside Menfess Card
+ * Minimalist Music Box inside Menfess Card
+ * Click-to-play, matching the search list style
  */
-function CardMusicPlayer({ songId, cover, title, artist, preview }) {
+function CardMusicPlayer({ songId, cover, title, artist, album, preview }) {
   const audioRef = useRef(null);
-  const sliderRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [activePreview, setActivePreview] = useState(preview || null);
   const shouldPlayAfterFetch = useRef(false);
-
-  const isSeekingRef = useRef(false);
-
-  // Global pointer/mouse up listener to ensure seeking state resets even if pointer leaves slider
-  useEffect(() => {
-    const handleGlobalPointerUp = () => {
-      if (isSeekingRef.current) {
-        isSeekingRef.current = false;
-        const audio = audioRef.current;
-        const slider = sliderRef.current;
-        if (audio && slider && audio.duration && isFinite(audio.duration)) {
-          audio.currentTime = (Number(slider.value) / 100) * audio.duration;
-        }
-      }
-    };
-
-    window.addEventListener('pointerup', handleGlobalPointerUp);
-    window.addEventListener('mouseup', handleGlobalPointerUp);
-    return () => {
-      window.removeEventListener('pointerup', handleGlobalPointerUp);
-      window.removeEventListener('mouseup', handleGlobalPointerUp);
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -106,31 +83,6 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
     }
   }, [activePreview]);
 
-  // High performance smooth 60fps progress update - Direct DOM mutation (Zero React re-renders!)
-  useEffect(() => {
-    let animId;
-    const updateSmoothProgress = () => {
-      const audio = audioRef.current;
-      const slider = sliderRef.current;
-      if (audio && audio.duration && !audio.paused && slider) {
-        if (!isSeekingRef.current) {
-          const pct = (audio.currentTime / audio.duration) * 100;
-          slider.value = pct;
-          slider.style.setProperty('--progress', `${pct}%`);
-        }
-        animId = requestAnimationFrame(updateSmoothProgress);
-      }
-    };
-
-    if (isPlaying) {
-      animId = requestAnimationFrame(updateSmoothProgress);
-    }
-
-    return () => {
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, [isPlaying]);
-
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -140,8 +92,10 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
   }, []);
 
   const togglePlay = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
     const audio = audioRef.current;
     if (!audio) return;
@@ -172,42 +126,29 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
     }
   };
 
-  const applySeek = (val) => {
-    const audio = audioRef.current;
-    if (sliderRef.current) {
-      sliderRef.current.style.setProperty('--progress', `${val}%`);
-    }
-    if (audio && audio.duration && isFinite(audio.duration)) {
-      audio.currentTime = (val / 100) * audio.duration;
-    }
-  };
-
-  const handleSeek = (e) => {
-    e.stopPropagation();
-    const val = Number(e.target.value);
-    applySeek(val);
-  };
-
   const audioSrc = activePreview || preview;
 
   return (
     <div
-      className="gh-card__music"
+      className={`gh-card__music ${isPlaying ? 'gh-card__music--playing' : ''}`}
       draggable={false}
       onDragStart={(e) => {
         e.preventDefault();
         e.stopPropagation();
       }}
-      onMouseDown={(e) => {
-        e.stopPropagation();
-      }}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-      }}
       onClick={(e) => {
+        e.preventDefault();
         e.stopPropagation();
-        if (e.target.tagName !== 'INPUT') {
+        togglePlay(e);
+      }}
+      title={isPlaying ? 'Klik untuk jeda musik' : 'Klik untuk putar preview musik'}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          e.stopPropagation();
+          togglePlay(e);
         }
       }}
     >
@@ -215,7 +156,7 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
         <audio
           ref={audioRef}
           src={audioSrc}
-          preload="metadata"
+          preload="none"
           onWaiting={() => setIsBuffering(true)}
           onPlaying={() => {
             setIsBuffering(false);
@@ -238,10 +179,6 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
           onEnded={() => {
             setIsPlaying(false);
             setIsBuffering(false);
-            if (sliderRef.current) {
-              sliderRef.current.value = 0;
-              sliderRef.current.style.setProperty('--progress', '0%');
-            }
           }}
           onError={() => {
             setIsBuffering(false);
@@ -256,109 +193,64 @@ function CardMusicPlayer({ songId, cover, title, artist, preview }) {
         />
       )}
 
-      {cover ? (
-        <img
-          src={cover}
-          alt={title || 'Cover lagu'}
-          className="gh-card__music-cover"
-          loading="lazy"
-          draggable={false}
-        />
-      ) : (
-        <div className="gh-card__music-cover gh-card__music-cover--placeholder">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12 2v8.5a2.5 2.5 0 1 1-2-2.45V4.25l-6 1.5v6.75a2.5 2.5 0 1 1-2-2.45V3.5a1 1 0 0 1 .76-.97l8-2A1 1 0 0 1 12 2Z" />
-          </svg>
-        </div>
-      )}
+      {/* Album Cover with Play/Equalizer State */}
+      <div className="gh-card__music-cover-wrap">
+        {cover ? (
+          <img
+            src={cover}
+            alt={title || 'Cover lagu'}
+            className="gh-card__music-cover"
+            loading="lazy"
+            draggable={false}
+          />
+        ) : (
+          <div className="gh-card__music-cover gh-card__music-cover--placeholder">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12 2v8.5a2.5 2.5 0 1 1-2-2.45V4.25l-6 1.5v6.75a2.5 2.5 0 1 1-2-2.45V3.5a1 1 0 0 1 .76-.97l8-2A1 1 0 0 1 12 2Z" />
+            </svg>
+          </div>
+        )}
 
-      <div className="gh-card__music-body">
-        <div className="gh-card__music-header">
+        {isPlaying ? (
+          <div className="gh-card__music-playing-overlay">
+            {isBuffering ? (
+              <svg className="gh-music-spinner" width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="#fff" strokeWidth="2.5" strokeOpacity="0.25" />
+                <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <span className="gh-music-eq gh-music-eq--compact">
+                <span className="gh-music-eq__bar" />
+                <span className="gh-music-eq__bar" />
+                <span className="gh-music-eq__bar" />
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="gh-card__music-hover-overlay">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="#ffffff">
+              <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Song Details */}
+      <div className="gh-card__music-details">
+        <div className="gh-card__music-title-row">
           <span className="gh-card__music-title" title={title}>
             {title}
           </span>
-          {artist && (
-            <span className="gh-card__music-artist" title={artist}>
-              • {artist}
-            </span>
-          )}
-          {isPlaying && (
-            <span className="gh-music-eq" aria-label="Sedang diputar">
-              <span className="gh-music-eq__bar" />
-              <span className="gh-music-eq__bar" />
-              <span className="gh-music-eq__bar" />
-            </span>
+        </div>
+        <div className="gh-card__music-subtitle">
+          <span>{artist}</span>
+          {album && (
+            <>
+              <span className="gh-card__music-dot">•</span>
+              <span>{album}</span>
+            </>
           )}
         </div>
-
-        {(audioSrc || songId) && (
-          <div className="gh-card__music-controls">
-            <button
-              type="button"
-              className="gh-card__music-play-btn"
-              onClick={togglePlay}
-              aria-label={isPlaying ? 'Jeda preview' : 'Putar preview'}
-              title={isPlaying ? 'Jeda' : 'Putar'}
-            >
-              {isBuffering ? (
-                <svg className="gh-music-spinner" width="10" height="10" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
-                  <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                </svg>
-              ) : isPlaying ? (
-                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Zm5 0a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Z" />
-                </svg>
-              ) : (
-                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
-                </svg>
-              )}
-            </button>
-
-            <div className="gh-card__music-track">
-              <input
-                ref={sliderRef}
-                type="range"
-                min="0"
-                max="100"
-                step="0.1"
-                defaultValue="0"
-                draggable={false}
-                onDragStart={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  isSeekingRef.current = true;
-                }}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  isSeekingRef.current = true;
-                }}
-                onInput={handleSeek}
-                onChange={handleSeek}
-                onPointerUp={(e) => {
-                  e.stopPropagation();
-                  isSeekingRef.current = false;
-                  applySeek(Number(e.target.value));
-                }}
-                onMouseUp={(e) => {
-                  e.stopPropagation();
-                  isSeekingRef.current = false;
-                  applySeek(Number(e.target.value));
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                className="gh-card__music-slider"
-                style={{ '--progress': '0%' }}
-                aria-label="Seek preview lagu"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -418,6 +310,7 @@ function MenfessCard({
             cover={song_cover}
             title={song_title}
             artist={song_artist}
+            album={song_album}
             preview={song_preview}
           />
         )}
