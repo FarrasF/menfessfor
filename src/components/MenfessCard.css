@@ -1,27 +1,24 @@
 /* ============================================
-   GitHub Style Discussion List Item
+   GitHub Style Menfess Discussion Item
    ============================================ */
 
 .gh-card {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: var(--space-3);
+  padding: var(--space-4);
   background-color: var(--color-canvas-default);
   border: 1px solid var(--color-border-default);
-  border-top: none;
+  border-radius: var(--radius-md);
   color: var(--color-fg-default);
   text-decoration: none;
-  transition: background-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .gh-card:hover {
   background-color: var(--color-canvas-subtle);
+  border-color: #afb8c1;
   text-decoration: none;
-}
-
-.gh-card:hover .gh-card__title {
-  color: var(--color-accent-fg);
 }
 
 .gh-card__icon {
@@ -37,70 +34,65 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-2);
 }
 
-/* Title & Label Row */
-.gh-card__title-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.gh-card__title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-fg-default);
-  line-height: 1.4;
-  word-break: break-word;
-  transition: color var(--transition-fast);
-}
-
-/* Metadata Row */
-.gh-card__meta {
+.gh-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  font-size: var(--text-xs);
-  color: var(--color-fg-muted);
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .gh-card__identity {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.gh-card__author {
+  color: var(--color-fg-default);
 }
 
 .gh-card__id {
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-fg-subtle);
-}
-
-.gh-card__author {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-fg-muted);
+  font-size: var(--text-xs);
 }
 
-.gh-card__meta-separator {
-  color: var(--color-border-default);
-  font-size: 10px;
+.gh-card__content {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-fg-default);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.gh-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  margin-top: var(--space-1);
 }
 
 .gh-card__time {
   white-space: nowrap;
 }
 
-/* Stats (Likes & Comments) */
 .gh-card__stats {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-left: auto;
+  gap: var(--space-3);
 }
 
 .gh-card__stat {
@@ -108,31 +100,9 @@
   align-items: center;
   gap: 4px;
   color: var(--color-fg-muted);
-  font-size: 12px;
-  line-height: 1;
+  font-size: var(--text-xs);
 }
 
 .gh-card__stat svg {
   color: var(--color-fg-muted);
-}
-
-@media (max-width: 640px) {
-  .gh-card {
-    padding: 10px 12px;
-    gap: 8px;
-  }
-
-  .gh-card__title {
-    font-size: 14px;
-  }
-
-  .gh-card__meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .gh-card__stats {
-    margin-left: 0;
-  }
 }
