@@ -55,6 +55,9 @@ export default {
                             song.album?.cover ||
                             '',
                         preview: song.preview || null,
+                        duration: song.duration || 0,
+                        explicit: Boolean(song.explicit_lyrics),
+                        rank: song.rank || 0,
                     }),
                     {
                         status: 200,
@@ -113,6 +116,9 @@ export default {
                 album: song.album?.title || '',
                 cover: song.album?.cover_medium || '',
                 preview: song.preview || null,
+                duration: song.duration || 0,
+                explicit: Boolean(song.explicit_lyrics),
+                rank: song.rank || 0,
             }))
 
             return new Response(JSON.stringify(songs), {

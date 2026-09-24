@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
-import { searchMusic } from '../lib/music';
+import { searchMusic, getMusicById } from '../lib/music';
 import './SubmitMenfess.css';
 
 const MAX_CHARS = 500;
@@ -225,11 +225,28 @@ function SubmitMenfess() {
   const [musicLoading, setMusicLoading] = useState(false);
   const [musicError, setMusicError] = useState('');
 
-  // Menyimpan audio yang sedang dimainkan
+  // Audio preview playback for the search list
+  const [playingSongId, setPlayingSongId] = useState(null);
+  const [isAudioBuffering, setIsAudioBuffering] = useState(false);
+  const listAudioRef = useRef(null);
+  const searchTimerRef = useRef(null);
+
+  // Audio preview for attached song
   const currentAudioRef = useRef(null);
 
   useEffect(() => {
     document.title = 'Menfess Baru · menfessfor';
+    return () => {
+      if (listAudioRef.current) {
+        listAudioRef.current.pause();
+      }
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+      }
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
   }, []);
 
   const charCount = content.length;
@@ -244,29 +261,102 @@ function SubmitMenfess() {
   // MUSIC SEARCH
   // =========================
 
-  const handleMusicSearch = async () => {
-    if (!musicQuery.trim()) return;
+  const executeMusicSearch = async (queryText) => {
+    const q = (queryText !== undefined ? queryText : musicQuery).trim();
+    if (!q) {
+      setSongs([]);
+      setMusicError('');
+      setMusicLoading(false);
+      return;
+    }
 
     setMusicLoading(true);
     setMusicError('');
 
-    // Stop audio yang sedang dimainkan
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
+    if (listAudioRef.current) {
+      listAudioRef.current.pause();
+      setPlayingSongId(null);
     }
 
     try {
-      const results = await searchMusic(musicQuery);
-
-      // Tampilkan maksimal 6 hasil
-      setSongs(results.slice(0, 6));
+      const results = await searchMusic(q);
+      // Display matching songs (up to 10)
+      setSongs(results.slice(0, 10));
     } catch (error) {
       console.error('Music search error:', error);
-      setMusicError('Gagal mencari lagu. Coba lagi.');
+      setMusicError('Gagal mencari lagu. Coba kata kunci lain.');
       setSongs([]);
     } finally {
       setMusicLoading(false);
+    }
+  };
+
+  const handleSearchInputChange = (val) => {
+    setMusicQuery(val);
+    if (!val.trim()) {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      if (listAudioRef.current) {
+        listAudioRef.current.pause();
+        setPlayingSongId(null);
+      }
+      setSongs([]);
+      setMusicError('');
+      setMusicLoading(false);
+      return;
+    }
+
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      executeMusicSearch(val);
+    }, 350);
+  };
+
+  const handleTogglePlaySong = async (song, e) => {
+    if (e?.target?.closest('.ig-music-item__action')) {
+      return;
+    }
+
+    const audio = listAudioRef.current;
+    if (!audio) return;
+
+    if (playingSongId === song.id) {
+      audio.pause();
+      setPlayingSongId(null);
+      setIsAudioBuffering(false);
+      return;
+    }
+
+    audio.pause();
+    setPlayingSongId(song.id);
+    setIsAudioBuffering(true);
+
+    try {
+      let previewUrl = song.preview;
+      if (song.id) {
+        try {
+          const fresh = await getMusicById(song.id);
+          if (fresh?.preview) {
+            previewUrl = fresh.preview;
+          }
+        } catch {
+          // ignore error
+        }
+      }
+
+      if (!previewUrl) {
+        setIsAudioBuffering(false);
+        setPlayingSongId(null);
+        return;
+      }
+
+      audio.src = previewUrl;
+      audio.currentTime = 0;
+      await audio.play();
+      setIsAudioBuffering(false);
+    } catch (err) {
+      console.error('Play audio error:', err);
+      setIsAudioBuffering(false);
+      setPlayingSongId(null);
     }
   };
 
@@ -275,17 +365,11 @@ function SubmitMenfess() {
   // =========================
 
   const handleSelectSong = (song) => {
-    // Stop preview yang sedang dimainkan
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
+    if (listAudioRef.current) {
+      listAudioRef.current.pause();
+      setPlayingSongId(null);
     }
-
-    // Simpan lagu yang dipilih
     setSelectedSong(song);
-
-    // Hilangkan hasil pencarian
-    setSongs([]);
   };
 
   // =========================
@@ -293,7 +377,13 @@ function SubmitMenfess() {
   // =========================
 
   const handleRemoveSong = () => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+    }
     setSelectedSong(null);
+    setMusicQuery('');
+    setSongs([]);
+    setMusicError('');
   };
 
   // =========================
@@ -727,182 +817,177 @@ function SubmitMenfess() {
                   )}
                 </div>
               ) : (
-                <>
-                  {/* Search Input Bar */}
-                  <div className="submit-music-search">
-                    <div className="submit-music-search__wrapper">
-                      <span className="submit-music-search__icon" aria-hidden="true">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="currentColor"
-                        >
-                          <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.5 4.5 0 1 0-9 0 4.5 4.5 0 0 0 9 0Z" />
-                        </svg>
-                      </span>
-
-                      <input
-                        type="text"
-                        className="gh-input submit-music-search__input"
-                        placeholder="Cari judul lagu atau nama penyanyi..."
-                        value={musicQuery}
-                        onChange={(e) => setMusicQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleMusicSearch();
+                <div className="ig-music-sheet">
+                  {/* Search Bar */}
+                  <div className="ig-music-search">
+                    <svg className="ig-music-search__icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.5 4.5 0 1 0-9 0 4.5 4.5 0 0 0 9 0Z" />
+                    </svg>
+                    <input
+                      type="text"
+                      className="ig-music-search__input"
+                      placeholder="Cari..."
+                      value={musicQuery}
+                      onChange={(e) => handleSearchInputChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          executeMusicSearch();
+                        }
+                      }}
+                    />
+                    {musicQuery && (
+                      <button
+                        type="button"
+                        className="ig-music-search__clear"
+                        onClick={() => {
+                          setMusicQuery('');
+                          setSongs([]);
+                          setMusicError('');
+                          if (listAudioRef.current) {
+                            listAudioRef.current.pause();
+                            setPlayingSongId(null);
                           }
                         }}
-                      />
-
-                      {musicQuery && (
-                        <button
-                          type="button"
-                          className="submit-music-search__clear-btn"
-                          onClick={() => {
-                            setMusicQuery('');
-                            setSongs([]);
-                            setMusicError('');
-                          }}
-                          title="Hapus pencarian"
-                          aria-label="Hapus teks pencarian"
-                        >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                          >
-                            <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="gh-btn submit-music-search__btn"
-                      onClick={handleMusicSearch}
-                      disabled={musicLoading || !musicQuery.trim()}
-                    >
-                      {musicLoading ? (
-                        <>
-                          <svg
-                            className="submit-music-spinner"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                          >
-                            <path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5.75.75 0 0 1 1.5 0A8 8 0 1 1 8 0a.75.75 0 0 1 0 1.5Z" />
-                          </svg>
-                          <span>Mencari...</span>
-                        </>
-                      ) : (
-                        <span>Cari</span>
-                      )}
-                    </button>
+                        aria-label="Hapus pencarian"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
 
-                  {/* Loading Indicator */}
+                  {/* Loading State */}
                   {musicLoading && (
-                    <div className="submit-music-loading">
-                      <svg
-                        className="submit-music-spinner"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                      >
-                        <path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5.75.75 0 0 1 1.5 0A8 8 0 1 1 8 0a.75.75 0 0 1 0 1.5Z" />
+                    <div className="ig-music-loading">
+                      <svg className="gh-music-spinner" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+                        <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                       </svg>
-                      <span>Mencari lagu di database...</span>
+                      <span>Mencari lagu...</span>
                     </div>
                   )}
 
                   {/* Error State */}
                   {musicError && (
                     <div className="submit-music-error">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-.25-6.25a.75.75 0 0 0-1.5 0v3.5a.75.75 0 0 0 1.5 0v-3.5Z" />
-                      </svg>
                       <span>{musicError}</span>
                     </div>
                   )}
 
-                  {/* Search Results List */}
-                  {songs.length > 0 && (
-                    <div className="submit-music-results">
+                  {/* No Results State */}
+                  {!musicLoading && !musicError && musicQuery.trim() && songs.length === 0 && (
+                    <div className="ig-music-empty">
+                      <span>Tidak ada lagu yang cocok dengan "{musicQuery}"</span>
+                    </div>
+                  )}
 
-                      {songs.map((song) => (
-                        <div key={song.id} className="submit-music-card">
-                          <div className="submit-music-card__main">
-                            {song.cover && (
+                  {/* Audio element for list preview playback */}
+                  <audio
+                    ref={listAudioRef}
+                    preload="none"
+                    onEnded={() => setPlayingSongId(null)}
+                    onError={() => {
+                      setPlayingSongId(null);
+                      setIsAudioBuffering(false);
+                    }}
+                    onWaiting={() => setIsAudioBuffering(true)}
+                    onPlaying={() => setIsAudioBuffering(false)}
+                    onPause={() => setIsAudioBuffering(false)}
+                  />
+
+                  {/* Songs List - Only displayed when query exists and songs are found */}
+                  {musicQuery.trim() && songs.length > 0 && (
+                    <div className="ig-music-list">
+                      {songs.map((song) => {
+                        const isThisPlaying = playingSongId === song.id;
+                        const isThisBuffering = isThisPlaying && isAudioBuffering;
+                        const isSelected = selectedSong?.id === song.id;
+
+                        return (
+                          <div
+                            key={song.id}
+                            className={`ig-music-item ${isThisPlaying ? 'ig-music-item--playing' : ''} ${isSelected ? 'ig-music-item--selected' : ''}`}
+                            onClick={(e) => handleTogglePlaySong(song, e)}
+                            title="Klik baris untuk memutar preview lagu"
+                          >
+                            {/* Album Cover with Play/Equalizer State */}
+                            <div className="ig-music-item__cover-wrap">
                               <img
                                 src={song.cover}
                                 alt={song.title}
-                                className="submit-music-card__cover"
+                                className="ig-music-item__cover"
+                                loading="lazy"
                               />
-                            )}
+                              {isThisPlaying ? (
+                                <div className="ig-music-item__playing-overlay">
+                                  {isThisBuffering ? (
+                                    <svg className="gh-music-spinner" width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                      <circle cx="8" cy="8" r="6" stroke="#fff" strokeWidth="2.5" strokeOpacity="0.25" />
+                                      <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                                    </svg>
+                                  ) : (
+                                    <span className="gh-music-eq gh-music-eq--compact">
+                                      <span className="gh-music-eq__bar" />
+                                      <span className="gh-music-eq__bar" />
+                                      <span className="gh-music-eq__bar" />
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="ig-music-item__hover-overlay">
+                                  <svg width="10" height="10" viewBox="0 0 16 16" fill="#ffffff">
+                                    <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
 
-                            <div className="submit-music-card__details">
-                              <div
-                                className="submit-music-card__title"
-                                title={song.title}
-                              >
-                                {song.title}
+                            {/* Song Title & Subtitle */}
+                            <div className="ig-music-item__details">
+                              <div className="ig-music-item__title-row">
+                                <span className="ig-music-item__title" title={song.title}>
+                                  {song.title}
+                                </span>
+                                {song.explicit && (
+                                  <span className="ig-music-item__explicit" title="Explicit">
+                                    E
+                                  </span>
+                                )}
                               </div>
 
-                              <div className="submit-music-card__meta">
+                              <div className="ig-music-item__subtitle">
                                 <span>{song.artist}</span>
                                 {song.album && (
                                   <>
-                                    <span className="submit-music-card__dot">•</span>
+                                    <span className="ig-music-item__dot">•</span>
                                     <span>{song.album}</span>
                                   </>
                                 )}
                               </div>
                             </div>
-                          </div>
 
-                          <div className="submit-music-card__actions">
-                            {song.preview && (
-                              <MiniAudioPlayer
-                                src={song.preview}
-                                currentAudioRef={currentAudioRef}
-                                className="submit-music-card__mini-player"
-                              />
-                            )}
-
-                            <button
-                              type="button"
-                              className="gh-btn gh-btn-primary submit-music-card__select-btn"
-                              onClick={() => handleSelectSong(song)}
-                            >
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 16 16"
-                                fill="currentColor"
-                                aria-hidden="true"
+                            {/* Action: Clean Pilih button (bookmark removed) */}
+                            <div className="ig-music-item__action">
+                              <button
+                                type="button"
+                                className="gh-btn gh-btn-sm gh-btn-primary ig-music-item__select-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectSong(song);
+                                }}
+                                title="Pilih lagu ini untuk menfess"
                               >
-                                <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-                              </svg>
-                              <span>Pilih</span>
-                            </button>
+                                Pilih
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
-                </>
+                </div>
               )}
             </div>
 
