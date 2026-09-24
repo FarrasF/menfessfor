@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './MenfessCard.css';
 
@@ -38,10 +39,194 @@ function getCategoryLabelClass(category) {
   return map[category] || 'gh-label-random';
 }
 
-function MenfessCard({ id, content, category, likes, comments_count, created_at }) {
+/**
+ * Minimalist Music Player inside Menfess Card
+ */
+function CardMusicPlayer({ cover, title, artist, preview }) {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Smooth 60fps progress update loop
+  useEffect(() => {
+    let animId;
+    const updateSmoothProgress = () => {
+      const audio = audioRef.current;
+      if (audio && audio.duration && !audio.paused) {
+        setProgress((audio.currentTime / audio.duration) * 100);
+        animId = requestAnimationFrame(updateSmoothProgress);
+      }
+    };
+
+    if (isPlaying) {
+      animId = requestAnimationFrame(updateSmoothProgress);
+    }
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isPlaying]);
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  const togglePlay = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch((err) => console.error('Audio play error:', err));
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (audio && audio.duration) {
+      setProgress((audio.currentTime / audio.duration) * 100);
+    }
+  };
+
+  const handleSeek = (e) => {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    const newProgress = Number(e.target.value);
+    audio.currentTime = (newProgress / 100) * audio.duration;
+    setProgress(newProgress);
+  };
+
+  return (
+    <div
+      className="gh-card__music"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      {preview && (
+        <audio
+          ref={audioRef}
+          src={preview}
+          preload="none"
+          onPlay={(e) => {
+            const allAudios = document.querySelectorAll('audio');
+            allAudios.forEach((a) => {
+              if (a !== e.currentTarget && !a.paused) {
+                a.pause();
+              }
+            });
+            setIsPlaying(true);
+          }}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => {
+            setIsPlaying(false);
+            setProgress(0);
+          }}
+          onTimeUpdate={handleTimeUpdate}
+        />
+      )}
+
+      {cover ? (
+        <img
+          src={cover}
+          alt={title || 'Cover lagu'}
+          className="gh-card__music-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="gh-card__music-cover gh-card__music-cover--placeholder">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M12 2v8.5a2.5 2.5 0 1 1-2-2.45V4.25l-6 1.5v6.75a2.5 2.5 0 1 1-2-2.45V3.5a1 1 0 0 1 .76-.97l8-2A1 1 0 0 1 12 2Z" />
+          </svg>
+        </div>
+      )}
+
+      <div className="gh-card__music-body">
+        <div className="gh-card__music-header">
+          <span className="gh-card__music-title" title={title}>
+            {title}
+          </span>
+          {artist && (
+            <span className="gh-card__music-artist" title={artist}>
+              • {artist}
+            </span>
+          )}
+        </div>
+
+        {preview && (
+          <div className="gh-card__music-controls">
+            <button
+              type="button"
+              className="gh-card__music-play-btn"
+              onClick={togglePlay}
+              aria-label={isPlaying ? 'Jeda preview' : 'Putar preview'}
+              title={isPlaying ? 'Jeda' : 'Putar'}
+            >
+              {isPlaying ? (
+                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Zm5 0a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Z" />
+                </svg>
+              ) : (
+                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
+                </svg>
+              )}
+            </button>
+
+            <div className="gh-card__music-track">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.1"
+                value={progress || 0}
+                onChange={handleSeek}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="gh-card__music-slider"
+                style={{ '--progress': `${progress || 0}%` }}
+                aria-label="Seek preview lagu"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MenfessCard({
+  id,
+  content,
+  category,
+  likes,
+  comments_count,
+  created_at,
+  song_id,
+  song_title,
+  song_artist,
+  song_album,
+  song_cover,
+  song_preview,
+}) {
   const anonId = String(id).padStart(3, '0');
   const safeLikes = likes ?? 0;
   const safeComments = comments_count ?? 0;
+  const hasSong = Boolean(song_title || song_preview);
 
   return (
     <Link to={`/menfess/${id}`} className="gh-card" aria-label={`Baca diskusi anonim #${anonId}`}>
@@ -60,6 +245,16 @@ function MenfessCard({ id, content, category, likes, comments_count, created_at 
             {category || 'Umum'}
           </span>
         </div>
+
+        {/* Music Player Row if song exists */}
+        {hasSong && (
+          <CardMusicPlayer
+            cover={song_cover}
+            title={song_title}
+            artist={song_artist}
+            preview={song_preview}
+          />
+        )}
 
         {/* Metadata Row */}
         <div className="gh-card__meta">

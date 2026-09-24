@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import SubmitMenfess from './pages/SubmitMenfess';
 import MenfessDetail from './pages/MenfessDetail';
 import Admin from './pages/Admin';
+import MusicTest from './pages/MusicTest'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/submit" element={<SubmitMenfess />} />
           <Route path="/menfess/:id" element={<MenfessDetail />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/music-test" element={<MusicTest />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

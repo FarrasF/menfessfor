@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
+import { searchMusic } from '../lib/music';
 import './SubmitMenfess.css';
 
 const MAX_CHARS = 500;
@@ -13,7 +14,131 @@ function getCategoryLabelClass(category) {
     Akademik: 'gh-label-akademik',
     Random: 'gh-label-random',
   };
+
   return map[category] || '';
+}
+
+function MiniAudioPlayer({ src, currentAudioRef, className = '' }) {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setIsPlaying(false);
+    setProgress(0);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
+  }, [src]);
+
+  // Smooth 60fps progress update loop
+  useEffect(() => {
+    let animId;
+    const updateSmoothProgress = () => {
+      const audio = audioRef.current;
+      if (audio && audio.duration && !audio.paused) {
+        setProgress((audio.currentTime / audio.duration) * 100);
+        animId = requestAnimationFrame(updateSmoothProgress);
+      }
+    };
+
+    if (isPlaying) {
+      animId = requestAnimationFrame(updateSmoothProgress);
+    }
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isPlaying]);
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      if (currentAudioRef?.current && currentAudioRef.current !== audio) {
+        currentAudioRef.current.pause();
+      }
+      audio.play().catch((err) => console.error('Audio play error:', err));
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (audio && audio.duration) {
+      setProgress((audio.currentTime / audio.duration) * 100);
+    }
+  };
+
+  const handleSeek = (e) => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    const newProgress = Number(e.target.value);
+    audio.currentTime = (newProgress / 100) * audio.duration;
+    setProgress(newProgress);
+  };
+
+  return (
+    <div className={`mini-audio-player ${className}`}>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        onPlay={(e) => {
+          if (
+            currentAudioRef?.current &&
+            currentAudioRef.current !== e.currentTarget
+          ) {
+            currentAudioRef.current.pause();
+          }
+          if (currentAudioRef) {
+            currentAudioRef.current = e.currentTarget;
+          }
+          setIsPlaying(true);
+        }}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => {
+          setIsPlaying(false);
+          setProgress(0);
+        }}
+        onTimeUpdate={handleTimeUpdate}
+      />
+
+      <button
+        type="button"
+        className="mini-audio-player__btn"
+        onClick={togglePlay}
+        title={isPlaying ? 'Jeda preview' : 'Putar preview'}
+        aria-label={isPlaying ? 'Jeda preview' : 'Putar preview'}
+      >
+        {isPlaying ? (
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Zm5 0a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Z" />
+          </svg>
+        ) : (
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
+          </svg>
+        )}
+      </button>
+
+      <div className="mini-audio-player__track">
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="0.1"
+          value={progress || 0}
+          onChange={handleSeek}
+          className="mini-audio-player__slider"
+          style={{ '--progress': `${progress || 0}%` }}
+          aria-label="Seek progress"
+        />
+      </div>
+    </div>
+  );
 }
 
 function SubmitMenfess() {
@@ -22,21 +147,92 @@ function SubmitMenfess() {
   const [activeTab, setActiveTab] = useState('write');
   const [submitted, setSubmitted] = useState(false);
 
+  // Music
+  const [musicQuery, setMusicQuery] = useState('');
+  const [songs, setSongs] = useState([]);
+  const [selectedSong, setSelectedSong] = useState(null);
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [musicError, setMusicError] = useState('');
+
+  // Menyimpan audio yang sedang dimainkan
+  const currentAudioRef = useRef(null);
+
   useEffect(() => {
     document.title = 'Menfess Baru · menfessfor';
   }, []);
 
   const charCount = content.length;
   const isOverLimit = charCount > MAX_CHARS;
-  const isValid = category && content.trim().length > 0 && !isOverLimit;
+
+  const isValid =
+    category &&
+    content.trim().length > 0 &&
+    !isOverLimit;
+
+  // =========================
+  // MUSIC SEARCH
+  // =========================
+
+  const handleMusicSearch = async () => {
+    if (!musicQuery.trim()) return;
+
+    setMusicLoading(true);
+    setMusicError('');
+
+    // Stop audio yang sedang dimainkan
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+
+    try {
+      const results = await searchMusic(musicQuery);
+
+      // Tampilkan maksimal 6 hasil
+      setSongs(results.slice(0, 6));
+    } catch (error) {
+      console.error('Music search error:', error);
+      setMusicError('Gagal mencari lagu. Coba lagi.');
+      setSongs([]);
+    } finally {
+      setMusicLoading(false);
+    }
+  };
+
+  // =========================
+  // SELECT SONG
+  // =========================
+
+  const handleSelectSong = (song) => {
+    // Stop preview yang sedang dimainkan
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+
+    // Simpan lagu yang dipilih
+    setSelectedSong(song);
+
+    // Hilangkan hasil pencarian
+    setSongs([]);
+  };
+
+  // =========================
+  // REMOVE SONG
+  // =========================
+
+  const handleRemoveSong = () => {
+    setSelectedSong(null);
+  };
+
+  // =========================
+  // SUBMIT
+  // =========================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!isValid) return;
-
-    const { data: sessionData } = await supabase.auth.getSession();
-
-    console.log('SESSION:', sessionData.session);
 
     const { error } = await supabase
       .from('menfess')
@@ -45,6 +241,13 @@ function SubmitMenfess() {
           content: content.trim(),
           category: category,
           status: 'pending',
+
+          song_id: selectedSong?.id ?? null,
+          song_title: selectedSong?.title ?? null,
+          song_artist: selectedSong?.artist ?? null,
+          song_album: selectedSong?.album ?? null,
+          song_cover: selectedSong?.cover ?? null,
+          song_preview: selectedSong?.preview ?? null,
         },
       ]);
 
@@ -57,12 +260,30 @@ function SubmitMenfess() {
     setSubmitted(true);
   };
 
+  // =========================
+  // RESET FORM
+  // =========================
+
   const handleReset = () => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+
     setCategory('');
     setContent('');
     setSubmitted(false);
     setActiveTab('write');
+
+    setMusicQuery('');
+    setSongs([]);
+    setSelectedSong(null);
+    setMusicError('');
   };
+
+  // =========================
+  // SUCCESS PAGE
+  // =========================
 
   if (submitted) {
     return (
@@ -70,19 +291,35 @@ function SubmitMenfess() {
         <div className="container container--sm">
           <div className="gh-box submit-success">
             <div className="submit-success__icon">
-              <svg width="48" height="48" viewBox="0 0 16 16" fill="var(--color-success-fg)" aria-hidden="true">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 16 16"
+                fill="var(--color-success-fg)"
+                aria-hidden="true"
+              >
                 <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm3.78-9.72a.751.751 0 0 0-.018-1.042.751.751 0 0 0-1.042-.018L6.75 9.19 5.28 7.72a.751.751 0 0 0-1.042.018.751.751 0 0 0 .018 1.042l2 2a.75.75 0 0 0 1.06 0Z" />
               </svg>
             </div>
-            <h2 className="submit-success__title">Menfess Berhasil Dikirim!</h2>
+
+            <h2 className="submit-success__title">
+              Menfess Berhasil Dikirim!
+            </h2>
+
             <p className="submit-success__text">
-              Menfess kamu sekarang berstatus <code>pending</code> dan sedang menunggu peninjauan oleh moderator.
-              Setelah disetujui, menfess akan otomatis dipublikasikan ke feed komunitas.
+              Menfess kamu sekarang berstatus <code>pending</code> dan sedang
+              menunggu peninjauan oleh moderator. Setelah disetujui, menfess
+              akan otomatis dipublikasikan ke feed komunitas.
             </p>
+
             <div className="submit-success__actions">
-              <button className="gh-btn gh-btn-primary" onClick={handleReset}>
+              <button
+                className="gh-btn gh-btn-primary"
+                onClick={handleReset}
+              >
                 Tulis Menfess Baru
               </button>
+
               <Link to="/" className="gh-btn">
                 Kembali ke Diskusi
               </Link>
@@ -93,73 +330,135 @@ function SubmitMenfess() {
     );
   }
 
+  // =========================
+  // MAIN PAGE
+  // =========================
+
   return (
     <main className="page">
       <div className="container container--sm">
+
         {/* Page Sub-header */}
         <div className="submit-header">
           <div className="submit-header__breadcrumb">
             <Link to="/" className="submit-header__back-link">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />
               </svg>
+
               <span>Diskusi</span>
             </Link>
+
             <span className="submit-header__separator">/</span>
-            <span className="submit-header__current">Menfess Baru</span>
+
+            <span className="submit-header__current">
+              Menfess Baru
+            </span>
           </div>
-          <h1 className="submit-header__title">Buat Menfess Baru</h1>
+
+          <h1 className="submit-header__title">
+            Buat Menfess Baru
+          </h1>
+
           <p className="submit-header__desc">
             Sampaikan isi pikiran, unek-unek, atau cerita secara anonim.
           </p>
         </div>
 
-        {/* GitHub Flash Notice Banner */}
+        {/* Anonymous Notice */}
         <div className="gh-flash-banner">
           <div className="gh-flash-banner__icon">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--color-accent-fg)" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="var(--color-accent-fg)"
+              aria-hidden="true"
+            >
               <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
             </svg>
           </div>
+
           <div className="gh-flash-banner__text">
-            <strong>Informasi Anonimitas:</strong> Identitas pengirim tidak disimpan. Setiap menfess akan melalui peninjauan moderator demi kenyamanan bersama.
+            <strong>Informasi Anonimitas:</strong> Identitas pengirim tidak
+            disimpan. Setiap menfess akan melalui peninjauan moderator demi
+            kenyamanan bersama.
           </div>
         </div>
 
-        {/* Form Container with Avatar pointing to it */}
+        {/* Form */}
         <div className="submit-layout">
-          <div className="submit-layout__avatar" title="Pengirim Anonim">
-            <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+
+          <div
+            className="submit-layout__avatar"
+            title="Pengirim Anonim"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              aria-hidden="true"
+            >
               <path d="M10.561 8.073a6.005 6.005 0 0 1 3.432 5.142.75.75 0 1 1-1.498.07 4.5 4.5 0 0 0-8.99 0 .75.75 0 0 1-1.498-.07 6.004 6.004 0 0 1 3.431-5.142 3.999 3.999 0 1 1 5.123 0ZM10.5 5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" />
             </svg>
           </div>
 
-          <form className="gh-box submit-form-box" onSubmit={handleSubmit}>
-            {/* Category / Label Selector */}
+          <form
+            className="gh-box submit-form-box"
+            onSubmit={handleSubmit}
+          >
+
+            {/* Category */}
             <div className="submit-form-box__section">
               <div className="submit-form-box__label-group">
                 <span className="submit-form-box__label-title">
-                  Pilih Kategori / Label <span className="submit-form-box__required">*</span>
+                  Pilih Kategori / Label{' '}
+                  <span className="submit-form-box__required">
+                    *
+                  </span>
                 </span>
-                <span className="submit-form-box__label-hint">Pilih salah satu label yang paling sesuai</span>
+
+                <span className="submit-form-box__label-hint">
+                  Pilih salah satu label yang paling sesuai
+                </span>
               </div>
+
               <div className="submit-form-box__labels-row">
                 {CATEGORIES.map((cat) => {
                   const isSelected = category === cat;
+
                   return (
                     <button
                       key={cat}
                       type="button"
-                      className={`gh-label submit-label-btn ${getCategoryLabelClass(cat)} ${isSelected ? 'submit-label-btn--selected' : ''
+                      className={`gh-label submit-label-btn ${getCategoryLabelClass(
+                        cat
+                      )} ${isSelected
+                          ? 'submit-label-btn--selected'
+                          : ''
                         }`}
                       onClick={() => setCategory(cat)}
                       aria-pressed={isSelected}
                     >
                       {isSelected && (
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
                           <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
                         </svg>
                       )}
+
                       <span>{cat}</span>
                     </button>
                   );
@@ -167,28 +466,39 @@ function SubmitMenfess() {
               </div>
             </div>
 
-            {/* GitHub Tabbed Editor (Write / Preview) */}
+            {/* Editor */}
             <div className="submit-editor">
+
               <div className="submit-editor__tabnav">
                 <div className="submit-editor__tabs">
+
                   <button
                     type="button"
-                    className={`submit-editor__tab ${activeTab === 'write' ? 'submit-editor__tab--active' : ''}`}
+                    className={`submit-editor__tab ${activeTab === 'write'
+                        ? 'submit-editor__tab--active'
+                        : ''
+                      }`}
                     onClick={() => setActiveTab('write')}
                   >
                     Tulis
                   </button>
+
                   <button
                     type="button"
-                    className={`submit-editor__tab ${activeTab === 'preview' ? 'submit-editor__tab--active' : ''}`}
+                    className={`submit-editor__tab ${activeTab === 'preview'
+                        ? 'submit-editor__tab--active'
+                        : ''
+                      }`}
                     onClick={() => setActiveTab('preview')}
                   >
                     Pratinjau
                   </button>
+
                 </div>
               </div>
 
               <div className="submit-editor__body">
+
                 {activeTab === 'write' ? (
                   <textarea
                     id="menfess-content"
@@ -202,34 +512,369 @@ function SubmitMenfess() {
                 ) : (
                   <div className="submit-editor__preview">
                     {content.trim() ? (
-                      <p className="submit-editor__preview-text">{content}</p>
+                      <p className="submit-editor__preview-text">
+                        {content}
+                      </p>
                     ) : (
-                      <span className="submit-editor__preview-placeholder">Tidak ada yang bisa dipratinjau. Tulis sesuatu di tab Tulis terlebih dahulu.</span>
+                      <span className="submit-editor__preview-placeholder">
+                        Tidak ada yang bisa dipratinjau. Tulis sesuatu di
+                        tab Tulis terlebih dahulu.
+                      </span>
+                    )}
+
+                    {selectedSong && (
+                      <div className="menfess-music" style={{ marginTop: '16px' }}>
+                        <div className="menfess-music__info">
+                          {selectedSong.cover && (
+                            <img
+                              src={selectedSong.cover}
+                              alt={selectedSong.title || 'Cover lagu'}
+                              className="menfess-music__cover"
+                            />
+                          )}
+
+                          <div className="menfess-music__details">
+                            <div className="menfess-music__title">
+                              {selectedSong.title}
+                            </div>
+
+                            <div className="menfess-music__artist">
+                              {selectedSong.artist}
+                            </div>
+                          </div>
+                        </div>
+
+                        {selectedSong.preview && (
+                          <div style={{ marginTop: '10px' }}>
+                            <MiniAudioPlayer
+                              src={selectedSong.preview}
+                              currentAudioRef={currentAudioRef}
+                            />
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
+
               </div>
             </div>
 
-            {/* Footer with clean flexbox alignment */}
-            <div className="submit-form-box__footer">
-              <div className="submit-form-box__meta">
-                <span className="submit-form-box__badge">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path d="M8.533.133a1.749 1.749 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48v4.27c0 4.29 2.78 8.01 6.74 9.17a1.749 1.749 0 0 0 .52 0c3.96-1.16 6.74-4.88 6.74-9.17V3.48a1.75 1.75 0 0 0-1.217-1.667Zm-.614 1.44a.25.25 0 0 1 .162 0l5.25 1.68a.25.25 0 0 1 .169.227v4.27c0 3.56-2.29 6.64-5.5 7.63a.25.25 0 0 1-.16 0C4.79 14.43 2.5 11.35 2.5 7.75V3.48a.25.25 0 0 1 .169-.227Z" />
+            {/* MUSIC SECTION */}
+            <div className="submit-music-section">
+              <div className="submit-music-header">
+                <div className="submit-music-title-wrap">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 2.5a.5.5 0 0 0-.67-.47l-6 2A.5.5 0 0 0 5 4.5v6.085A2.5 2.5 0 1 0 6.5 13V5.424l4.5-1.5v4.661A2.5 2.5 0 1 0 12.5 11V2.5Z" />
                   </svg>
-                  <span>100% Anonim</span>
-                </span>
-                <span className="submit-form-box__meta-dot">•</span>
-                <span className={`submit-form-box__counter ${isOverLimit ? 'submit-form-box__counter--over' : ''}`}>
-                  {charCount} / {MAX_CHARS} karakter
+                  <span className="submit-music-title">
+                    Tambahkan Lagu
+                  </span>
+                  <span className="submit-music-optional">
+                    (Opsional)
+                  </span>
+                </div>
+
+                <span className="submit-music-hint">
+                  Pilih lagu latar yang sesuai dengan isi menfess
                 </span>
               </div>
 
+              {/* Selected Song View */}
+              {selectedSong ? (
+                <div className="submit-music-selected">
+                  <div className="submit-music-selected__header">
+                    <span className="submit-music-selected__badge">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                      </svg>
+                      <span>Lagu Terlampir</span>
+                    </span>
+
+                    <button
+                      type="button"
+                      className="gh-btn gh-btn-sm gh-btn-danger submit-music-selected__remove-btn"
+                      onClick={handleRemoveSong}
+                      title="Hapus lagu yang dipilih"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.75.75 0 0 0 .746.675h4.196a.75.75 0 0 0 .746-.675l.66-6.6a.75.75 0 0 0-1.492-.15l-.615 6.15H6.603l-.615-6.15a.75.75 0 0 0-1.492.15Z" />
+                      </svg>
+                      <span>Hapus Lagu</span>
+                    </button>
+                  </div>
+
+                  <div className="submit-music-selected__content">
+                    {selectedSong.cover && (
+                      <img
+                        src={selectedSong.cover}
+                        alt={selectedSong.title}
+                        className="submit-music-selected__cover"
+                      />
+                    )}
+
+                    <div className="submit-music-selected__info">
+                      <div className="submit-music-selected__title">
+                        {selectedSong.title}
+                      </div>
+
+                      <div className="submit-music-selected__artist">
+                        {selectedSong.artist}
+                      </div>
+
+                      {selectedSong.album && (
+                        <div className="submit-music-selected__album">
+                          Album: {selectedSong.album}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedSong.preview && (
+                    <MiniAudioPlayer
+                      src={selectedSong.preview}
+                      currentAudioRef={currentAudioRef}
+                    />
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Search Input Bar */}
+                  <div className="submit-music-search">
+                    <div className="submit-music-search__wrapper">
+                      <span className="submit-music-search__icon" aria-hidden="true">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                        >
+                          <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.5 4.5 0 1 0-9 0 4.5 4.5 0 0 0 9 0Z" />
+                        </svg>
+                      </span>
+
+                      <input
+                        type="text"
+                        className="gh-input submit-music-search__input"
+                        placeholder="Cari judul lagu atau nama penyanyi..."
+                        value={musicQuery}
+                        onChange={(e) => setMusicQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleMusicSearch();
+                          }
+                        }}
+                      />
+
+                      {musicQuery && (
+                        <button
+                          type="button"
+                          className="submit-music-search__clear-btn"
+                          onClick={() => {
+                            setMusicQuery('');
+                            setSongs([]);
+                            setMusicError('');
+                          }}
+                          title="Hapus pencarian"
+                          aria-label="Hapus teks pencarian"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                          >
+                            <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="gh-btn submit-music-search__btn"
+                      onClick={handleMusicSearch}
+                      disabled={musicLoading || !musicQuery.trim()}
+                    >
+                      {musicLoading ? (
+                        <>
+                          <svg
+                            className="submit-music-spinner"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                          >
+                            <path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5.75.75 0 0 1 1.5 0A8 8 0 1 1 8 0a.75.75 0 0 1 0 1.5Z" />
+                          </svg>
+                          <span>Mencari...</span>
+                        </>
+                      ) : (
+                        <span>Cari</span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Loading Indicator */}
+                  {musicLoading && (
+                    <div className="submit-music-loading">
+                      <svg
+                        className="submit-music-spinner"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                      >
+                        <path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5.75.75 0 0 1 1.5 0A8 8 0 1 1 8 0a.75.75 0 0 1 0 1.5Z" />
+                      </svg>
+                      <span>Mencari lagu di database...</span>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {musicError && (
+                    <div className="submit-music-error">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-.25-6.25a.75.75 0 0 0-1.5 0v3.5a.75.75 0 0 0 1.5 0v-3.5Z" />
+                      </svg>
+                      <span>{musicError}</span>
+                    </div>
+                  )}
+
+                  {/* Search Results List */}
+                  {songs.length > 0 && (
+                    <div className="submit-music-results">
+
+                      {songs.map((song) => (
+                        <div key={song.id} className="submit-music-card">
+                          <div className="submit-music-card__main">
+                            {song.cover && (
+                              <img
+                                src={song.cover}
+                                alt={song.title}
+                                className="submit-music-card__cover"
+                              />
+                            )}
+
+                            <div className="submit-music-card__details">
+                              <div
+                                className="submit-music-card__title"
+                                title={song.title}
+                              >
+                                {song.title}
+                              </div>
+
+                              <div className="submit-music-card__meta">
+                                <span>{song.artist}</span>
+                                {song.album && (
+                                  <>
+                                    <span className="submit-music-card__dot">•</span>
+                                    <span>{song.album}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="submit-music-card__actions">
+                            {song.preview && (
+                              <MiniAudioPlayer
+                                src={song.preview}
+                                currentAudioRef={currentAudioRef}
+                                className="submit-music-card__mini-player"
+                              />
+                            )}
+
+                            <button
+                              type="button"
+                              className="gh-btn gh-btn-primary submit-music-card__select-btn"
+                              onClick={() => handleSelectSong(song)}
+                            >
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                aria-hidden="true"
+                              >
+                                <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                              </svg>
+                              <span>Pilih</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="submit-form-box__footer">
+
+              <div className="submit-form-box__meta">
+
+                <span className="submit-form-box__badge">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M8.533.133a1.749 1.749 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48v4.27c0 4.29 2.78 8.01 6.74 9.17a1.749 1.749 0 0 0 .52 0c3.96-1.16 6.74-4.88 6.74-9.17V3.48a1.75 1.75 0 0 0-1.217-1.667Zm-.614 1.44a.25.25 0 0 1 .162 0l5.25 1.68a.25.25 0 0 1 .169.227v4.27c0 3.56-2.29 6.64-5.5 7.63a.25.25 0 0 1-.16 0C4.79 14.43 2.5 11.35 2.5 7.75V3.48a.25.25 0 0 1 .169-.227Z" />
+                  </svg>
+
+                  <span>100% Anonim</span>
+                </span>
+
+                <span className="submit-form-box__meta-dot">
+                  •
+                </span>
+
+                <span
+                  className={`submit-form-box__counter ${isOverLimit
+                      ? 'submit-form-box__counter--over'
+                      : ''
+                    }`}
+                >
+                  {charCount} / {MAX_CHARS} karakter
+                </span>
+
+              </div>
+
               <div className="submit-form-box__actions">
+
                 <Link to="/" className="gh-btn">
                   Batal
                 </Link>
+
                 <button
                   type="submit"
                   className="gh-btn gh-btn-primary"
@@ -237,8 +882,11 @@ function SubmitMenfess() {
                 >
                   Kirim Menfess
                 </button>
+
               </div>
+
             </div>
+
           </form>
         </div>
       </div>

@@ -1,10 +1,156 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import CommentCard from '../components/CommentCard';
 import ReportModal from '../components/ReportModal';
 import { dummyMenfess, dummyComments } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
 import './MenfessDetail.css';
+
+/**
+ * Minimalist Music Player inside Menfess Detail
+ */
+function DetailMusicPlayer({ cover, title, artist, preview }) {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Smooth 60fps progress update loop
+  useEffect(() => {
+    let animId;
+    const updateSmoothProgress = () => {
+      const audio = audioRef.current;
+      if (audio && audio.duration && !audio.paused) {
+        setProgress((audio.currentTime / audio.duration) * 100);
+        animId = requestAnimationFrame(updateSmoothProgress);
+      }
+    };
+
+    if (isPlaying) {
+      animId = requestAnimationFrame(updateSmoothProgress);
+    }
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isPlaying]);
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch((err) => console.error('Audio play error:', err));
+    }
+  };
+
+  const handleSeek = (e) => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    const newProgress = Number(e.target.value);
+    audio.currentTime = (newProgress / 100) * audio.duration;
+    setProgress(newProgress);
+  };
+
+  return (
+    <div className="menfess-music">
+      {preview && (
+        <audio
+          ref={audioRef}
+          src={preview}
+          preload="none"
+          onPlay={(e) => {
+            const allAudios = document.querySelectorAll('audio');
+            allAudios.forEach((a) => {
+              if (a !== e.currentTarget && !a.paused) {
+                a.pause();
+              }
+            });
+            setIsPlaying(true);
+          }}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => {
+            setIsPlaying(false);
+            setProgress(0);
+          }}
+        />
+      )}
+
+      {cover ? (
+        <img
+          src={cover}
+          alt={title || 'Cover lagu'}
+          className="menfess-music__cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="menfess-music__cover menfess-music__cover--placeholder">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M12 2v8.5a2.5 2.5 0 1 1-2-2.45V4.25l-6 1.5v6.75a2.5 2.5 0 1 1-2-2.45V3.5a1 1 0 0 1 .76-.97l8-2A1 1 0 0 1 12 2Z" />
+          </svg>
+        </div>
+      )}
+
+      <div className="menfess-music__body">
+        <div className="menfess-music__header">
+          <span className="menfess-music__title" title={title}>
+            {title}
+          </span>
+          {artist && (
+            <span className="menfess-music__artist" title={artist}>
+              • {artist}
+            </span>
+          )}
+        </div>
+
+        {preview && (
+          <div className="menfess-music__controls">
+            <button
+              type="button"
+              className="menfess-music__play-btn"
+              onClick={togglePlay}
+              aria-label={isPlaying ? 'Jeda preview' : 'Putar preview'}
+              title={isPlaying ? 'Jeda' : 'Putar'}
+            >
+              {isPlaying ? (
+                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Zm5 0a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-2Z" />
+                </svg>
+              ) : (
+                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
+                </svg>
+              )}
+            </button>
+
+            <div className="menfess-music__track">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.1"
+                value={progress || 0}
+                onChange={handleSeek}
+                className="menfess-music__slider"
+                style={{ '--progress': `${progress || 0}%` }}
+                aria-label="Seek preview lagu"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function getCategoryLabelClass(category) {
   const map = {
@@ -304,7 +450,18 @@ function MenfessDetail() {
               </div>
 
               <div className="gh-comment-box__body gh-comment-box__body--root">
-                <p className="gh-comment-box__text gh-comment-box__text--lg">{menfess.content}</p>
+                <p className="gh-comment-box__text gh-comment-box__text--lg">
+                  {menfess.content}
+                </p>
+
+                {(menfess.song_title || menfess.song_preview) && (
+                  <DetailMusicPlayer
+                    cover={menfess.song_cover}
+                    title={menfess.song_title}
+                    artist={menfess.song_artist}
+                    preview={menfess.song_preview}
+                  />
+                )}
               </div>
 
               {/* GitHub Reactions Bar */}
