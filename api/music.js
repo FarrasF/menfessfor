@@ -2,7 +2,73 @@ export default {
     async fetch(request) {
         try {
             const url = new URL(request.url)
+
             const query = url.searchParams.get('q')
+            const id = url.searchParams.get('id')
+
+            // =========================
+            // GET SONG BY ID
+            // =========================
+
+            if (id) {
+                const deezerUrl = `https://api.deezer.com/track/${encodeURIComponent(id)}`
+                const response = await fetch(deezerUrl)
+
+                if (!response.ok) {
+                    return new Response(
+                        JSON.stringify({
+                            error: 'Gagal mengambil data lagu dari Deezer',
+                        }),
+                        {
+                            status: response.status,
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        }
+                    )
+                }
+
+                const song = await response.json()
+
+                if (!song || !song.id) {
+                    return new Response(
+                        JSON.stringify({
+                            error: 'Lagu tidak ditemukan',
+                        }),
+                        {
+                            status: 404,
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        }
+                    )
+                }
+
+                return new Response(
+                    JSON.stringify({
+                        id: song.id,
+                        title: song.title,
+                        artist: song.artist?.name || '',
+                        album: song.album?.title || '',
+                        cover:
+                            song.album?.cover_medium ||
+                            song.album?.cover ||
+                            '',
+                        preview: song.preview || null,
+                    }),
+                    {
+                        status: 200,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-store',
+                        },
+                    }
+                )
+            }
+
+            // =========================
+            // SEARCH SONG
+            // =========================
 
             if (!query) {
                 return new Response(
@@ -18,7 +84,9 @@ export default {
                 )
             }
 
-            const deezerUrl = `https://api.deezer.com/search?q=${encodeURIComponent(query)}`
+            const deezerUrl = `https://api.deezer.com/search?q=${encodeURIComponent(
+                query
+            )}`
 
             const response = await fetch(deezerUrl)
 
@@ -38,13 +106,13 @@ export default {
 
             const data = await response.json()
 
-            const songs = data.data.map((song) => ({
+            const songs = (data.data || []).map((song) => ({
                 id: song.id,
                 title: song.title,
-                artist: song.artist.name,
-                album: song.album.title,
-                cover: song.album.cover_medium,
-                preview: song.preview,
+                artist: song.artist?.name || '',
+                album: song.album?.title || '',
+                cover: song.album?.cover_medium || '',
+                preview: song.preview || null,
             }))
 
             return new Response(JSON.stringify(songs), {

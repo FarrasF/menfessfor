@@ -4,6 +4,7 @@ import CommentCard from '../components/CommentCard';
 import ReportModal from '../components/ReportModal';
 import { dummyMenfess, dummyComments } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
+import { getMusicById } from '../lib/music';
 import './MenfessDetail.css';
 
 /**
@@ -186,6 +187,9 @@ function MenfessDetail() {
   const [commentsList, setCommentsList] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [freshPreview, setFreshPreview] = useState(null)
+  const [musicLoading, setMusicLoading] = useState(false)
+
   useEffect(() => {
     fetchMenfess();
     fetchComments();
@@ -290,9 +294,41 @@ function MenfessDetail() {
       console.error('Gagal mengambil menfess:', error);
     } else {
       setMenfess(data);
+
+      // Ambil preview terbaru berdasarkan song_id
+      if (data.song_id) {
+        fetchFreshPreview(data.song_id);
+      } else {
+        // Fallback untuk menfess lama yang belum punya song_id
+        setFreshPreview(data.song_preview || null);
+      }
     }
 
     setLoading(false);
+  }
+
+  async function fetchFreshPreview(songId) {
+    if (!songId) {
+      setFreshPreview(null);
+      return;
+    }
+
+    setMusicLoading(true);
+
+    try {
+      const song = await getMusicById(songId);
+
+      if (song?.preview) {
+        setFreshPreview(song.preview);
+      } else {
+        setFreshPreview(null);
+      }
+    } catch (error) {
+      console.error('Gagal mengambil preview lagu terbaru:', error);
+      setFreshPreview(null);
+    } finally {
+      setMusicLoading(false);
+    }
   }
 
   async function fetchComments() {
@@ -454,13 +490,21 @@ function MenfessDetail() {
                   {menfess.content}
                 </p>
 
-                {(menfess.song_title || menfess.song_preview) && (
-                  <DetailMusicPlayer
-                    cover={menfess.song_cover}
-                    title={menfess.song_title}
-                    artist={menfess.song_artist}
-                    preview={menfess.song_preview}
-                  />
+                {(menfess.song_title || menfess.song_id) && (
+                  <>
+                    {musicLoading ? (
+                      <div className="menfess-music-loading">
+                        Memuat preview lagu...
+                      </div>
+                    ) : (
+                      <DetailMusicPlayer
+                        cover={menfess.song_cover}
+                        title={menfess.song_title}
+                        artist={menfess.song_artist}
+                        preview={freshPreview}
+                      />
+                    )}
+                  </>
                 )}
               </div>
 
