@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import MenfessCard from '../components/MenfessCard';
 import { CATEGORIES } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
 import { searchMusic, getMusicById } from '../lib/music';
@@ -672,47 +673,40 @@ function SubmitMenfess() {
                   />
                 ) : (
                   <div className="submit-editor__preview">
-                    {content.trim() ? (
-                      <p className="submit-editor__preview-text">
-                        {content}
-                      </p>
+                    {!content.trim() && !selectedSong ? (
+                      <div className="submit-editor__preview-empty">
+                        <svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 16 16"
+                          fill="var(--color-fg-muted)"
+                          aria-hidden="true"
+                        >
+                          <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
+                        </svg>
+                        <span className="submit-editor__preview-placeholder">
+                          Tidak ada yang bisa dipratinjau. Tulis sesuatu di
+                          tab Tulis atau lampirkan lagu terlebih dahulu.
+                        </span>
+                      </div>
                     ) : (
-                      <span className="submit-editor__preview-placeholder">
-                        Tidak ada yang bisa dipratinjau. Tulis sesuatu di
-                        tab Tulis terlebih dahulu.
-                      </span>
-                    )}
-
-                    {selectedSong && (
-                      <div className="menfess-music" style={{ marginTop: '16px' }}>
-                        <div className="menfess-music__info">
-                          {selectedSong.cover && (
-                            <img
-                              src={selectedSong.cover}
-                              alt={selectedSong.title || 'Cover lagu'}
-                              className="menfess-music__cover"
-                            />
-                          )}
-
-                          <div className="menfess-music__details">
-                            <div className="menfess-music__title">
-                              {selectedSong.title}
-                            </div>
-
-                            <div className="menfess-music__artist">
-                              {selectedSong.artist}
-                            </div>
-                          </div>
+                      <div className="submit-editor__preview-wrap">
+                        <div className="submit-editor__preview-header">
+                          <span className="submit-editor__preview-tag">
+                            Pratinjau Tampilan di Beranda
+                          </span>
                         </div>
-
-                        {selectedSong.preview && (
-                          <div style={{ marginTop: '10px' }}>
-                            <MiniAudioPlayer
-                              src={selectedSong.preview}
-                              currentAudioRef={currentAudioRef}
-                            />
-                          </div>
-                        )}
+                        <MenfessCard
+                          isPreview={true}
+                          content={content.trim() || '(Belum ada teks pesan)'}
+                          category={category || 'Curhat'}
+                          song_id={selectedSong?.id}
+                          song_title={selectedSong?.title}
+                          song_artist={selectedSong?.artist}
+                          song_album={selectedSong?.album}
+                          song_cover={selectedSong?.cover}
+                          song_preview={selectedSong?.preview}
+                        />
                       </div>
                     )}
                   </div>

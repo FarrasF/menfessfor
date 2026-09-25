@@ -163,6 +163,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
+}
+
+.gh-card__music-playing-overlay .gh-music-eq {
+  margin: 0;
+  padding: 0;
 }
 
 .gh-card__music-details {
@@ -238,4 +244,26 @@
 
 .gh-card__stat svg {
   color: var(--color-fg-muted);
+}
+
+/* ============================================
+   Preview Mode Styling
+   ============================================ */
+
+.gh-card--preview {
+  cursor: default;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gh-card--preview:hover {
+  background-color: var(--color-canvas-default);
+  border-color: var(--color-border-default);
+}
+
+.gh-card--preview .gh-card__title {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+  -webkit-line-clamp: unset;
 }

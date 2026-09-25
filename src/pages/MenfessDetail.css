@@ -382,6 +382,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
+}
+
+.menfess-music__playing-overlay .gh-music-eq {
+  margin: 0;
+  padding: 0;
 }
 
 .menfess-music__details {

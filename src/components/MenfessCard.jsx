@@ -44,7 +44,7 @@ function getCategoryLabelClass(category) {
  * Minimalist Music Box inside Menfess Card
  * Click-to-play, matching the search list style
  */
-function CardMusicPlayer({ songId, cover, title, artist, album, preview }) {
+export function CardMusicPlayer({ songId, cover, title, artist, album, preview }) {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -53,6 +53,10 @@ function CardMusicPlayer({ songId, cover, title, artist, album, preview }) {
 
   useEffect(() => {
     let isMounted = true;
+
+    if (preview) {
+      setActivePreview(preview);
+    }
 
     if (songId) {
       getMusicById(songId)
@@ -64,8 +68,6 @@ function CardMusicPlayer({ songId, cover, title, artist, album, preview }) {
         .catch((err) => {
           console.error('Failed to get fresh preview for song:', songId, err);
         });
-    } else if (preview) {
-      setActivePreview(preview);
     }
 
     return () => {
@@ -269,24 +271,15 @@ function MenfessCard({
   song_album,
   song_cover,
   song_preview,
+  isPreview = false,
 }) {
-  const anonId = String(id).padStart(3, '0');
+  const anonId = isPreview ? '000' : String(id || 0).padStart(3, '0');
   const safeLikes = likes ?? 0;
   const safeComments = comments_count ?? 0;
   const hasSong = Boolean(song_title || song_id || song_preview);
 
-  return (
-    <Link
-      to={`/menfess/${id}`}
-      className="gh-card"
-      draggable={false}
-      onDragStart={(e) => {
-        if (e.target.closest('.gh-card__music')) {
-          e.preventDefault();
-        }
-      }}
-      aria-label={`Baca diskusi anonim #${anonId}`}
-    >
+  const cardInner = (
+    <>
       {/* GitHub Discussion Purple Bubble Icon */}
       <div className="gh-card__icon" title="Diskusi">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="#8250df" aria-hidden="true">
@@ -322,7 +315,9 @@ function MenfessCard({
             <span className="gh-card__meta-separator">•</span>
             <span className="gh-card__author">ANONIM</span>
             <span className="gh-card__meta-separator">•</span>
-            <span className="gh-card__time">dikirim {formatTime(created_at)}</span>
+            <span className="gh-card__time">
+              {isPreview ? 'dikirim baru saja' : `dikirim ${formatTime(created_at)}`}
+            </span>
           </div>
 
           {/* Reaction & Comments stats on the right */}
@@ -358,6 +353,30 @@ function MenfessCard({
           </div>
         </div>
       </div>
+    </>
+  );
+
+  if (isPreview) {
+    return (
+      <div className="gh-card gh-card--preview" aria-label="Pratinjau diskusi anonim">
+        {cardInner}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to={`/menfess/${id}`}
+      className="gh-card"
+      draggable={false}
+      onDragStart={(e) => {
+        if (e.target.closest('.gh-card__music')) {
+          e.preventDefault();
+        }
+      }}
+      aria-label={`Baca diskusi anonim #${anonId}`}
+    >
+      {cardInner}
     </Link>
   );
 }
