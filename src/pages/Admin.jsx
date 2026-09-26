@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BrandLogo from '../components/BrandLogo';
+import { CardMusicPlayer } from '../components/MenfessCard';
 import { supabase } from '../lib/supabase';
 import { subscribeToPush } from '../lib/pushNotifications';
 import './Admin.css';
@@ -626,6 +627,17 @@ function Admin() {
                       "{item.content}"
                     </div>
 
+                    {Boolean(item.song_title || item.song_id || item.song_preview) && (
+                      <CardMusicPlayer
+                        songId={item.song_id}
+                        cover={item.song_cover}
+                        title={item.song_title}
+                        artist={item.song_artist}
+                        album={item.song_album}
+                        preview={item.song_preview}
+                      />
+                    )}
+
                     <div className="admin-queue-item__actions">
                       <button
                         className="gh-btn gh-btn-sm gh-btn-primary"
@@ -721,6 +733,17 @@ function Admin() {
                     <div className="admin-queue-item__preview">
                       "{item.content}"
                     </div>
+
+                    {Boolean(item.song_title || item.song_id || item.song_preview) && (
+                      <CardMusicPlayer
+                        songId={item.song_id}
+                        cover={item.song_cover}
+                        title={item.song_title}
+                        artist={item.song_artist}
+                        album={item.song_album}
+                        preview={item.song_preview}
+                      />
+                    )}
 
                     <div className="admin-queue-item__actions">
                       {deleteConfirmation === `approved-${item.id}` ? (

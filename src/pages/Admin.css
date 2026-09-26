@@ -268,6 +268,11 @@
   overflow-wrap: anywhere;
 }
 
+.admin-queue-item .gh-card__music {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .admin-queue-item__actions {
   display: flex;
   align-items: center;
