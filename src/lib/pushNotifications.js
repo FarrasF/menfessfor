@@ -32,7 +32,7 @@ export async function subscribeToPush() {
         throw new Error('Browser tidak mendukung Service Worker.');
     }
 
-    if (!('PushManager' in window)) {
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
         throw new Error('Browser tidak mendukung Push Notification.');
     }
 
