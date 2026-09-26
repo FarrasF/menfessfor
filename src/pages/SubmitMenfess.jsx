@@ -219,6 +219,11 @@ function SubmitMenfess() {
   const [activeTab, setActiveTab] = useState('write');
   const [submitted, setSubmitted] = useState(false);
 
+  // Image
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+
   // Music
   const [musicQuery, setMusicQuery] = useState('');
   const [songs, setSongs] = useState([]);
@@ -394,8 +399,41 @@ function SubmitMenfess() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isValid) return;
+    if (!isValid || imageUploading) return;
 
+    let imageUrl = null;
+
+    // Upload foto ke ImgBB jika user memilih foto
+    if (imageFile) {
+      setImageUploading(true);
+
+      try {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        const uploadResponse = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const uploadResult = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(uploadResult.error || 'Upload foto gagal');
+        }
+
+        imageUrl = uploadResult.url;
+      } catch (error) {
+        console.error('Gagal upload foto:', error);
+        alert(`Foto gagal diupload: ${error.message}`);
+        setImageUploading(false);
+        return;
+      }
+
+      setImageUploading(false);
+    }
+
+    // Simpan menfess + URL foto ke Supabase
     const { error } = await supabase
       .from('menfess')
       .insert([
@@ -403,6 +441,8 @@ function SubmitMenfess() {
           content: content.trim(),
           category: category,
           status: 'pending',
+
+          image_url: imageUrl,
 
           song_id: selectedSong?.id ?? null,
           song_title: selectedSong?.title ?? null,
@@ -417,6 +457,22 @@ function SubmitMenfess() {
       console.error('Gagal mengirim menfess:', error);
       alert('Menfess gagal dikirim. Coba lagi.');
       return;
+    }
+
+    try {
+      await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: 'Menfess Baru',
+          body: 'Ada menfess baru yang menunggu peninjauan.',
+          url: '/admin',
+        }),
+      });
+    } catch (notificationError) {
+      console.error('Gagal mengirim notifikasi:', notificationError);
     }
 
     setSubmitted(true);
@@ -436,6 +492,10 @@ function SubmitMenfess() {
     setContent('');
     setSubmitted(false);
     setActiveTab('write');
+
+    setImageFile(null);
+    setImagePreview(null);
+    setImageUploading(false);
 
     setMusicQuery('');
     setSongs([]);
@@ -476,10 +536,11 @@ function SubmitMenfess() {
 
             <div className="submit-success__actions">
               <button
+                type="submit"
                 className="gh-btn gh-btn-primary"
-                onClick={handleReset}
+                disabled={!isValid || imageUploading}
               >
-                Tulis Menfess Baru
+                {imageUploading ? 'Mengupload Foto...' : 'Kirim Menfess'}
               </button>
 
               <Link to="/" className="gh-btn">
@@ -603,8 +664,8 @@ function SubmitMenfess() {
                       className={`gh-label submit-label-btn ${getCategoryLabelClass(
                         cat
                       )} ${isSelected
-                          ? 'submit-label-btn--selected'
-                          : ''
+                        ? 'submit-label-btn--selected'
+                        : ''
                         }`}
                       onClick={() => setCategory(cat)}
                       aria-pressed={isSelected}
@@ -637,8 +698,8 @@ function SubmitMenfess() {
                   <button
                     type="button"
                     className={`submit-editor__tab ${activeTab === 'write'
-                        ? 'submit-editor__tab--active'
-                        : ''
+                      ? 'submit-editor__tab--active'
+                      : ''
                       }`}
                     onClick={() => setActiveTab('write')}
                   >
@@ -648,8 +709,8 @@ function SubmitMenfess() {
                   <button
                     type="button"
                     className={`submit-editor__tab ${activeTab === 'preview'
-                        ? 'submit-editor__tab--active'
-                        : ''
+                      ? 'submit-editor__tab--active'
+                      : ''
                       }`}
                     onClick={() => setActiveTab('preview')}
                   >
@@ -700,6 +761,7 @@ function SubmitMenfess() {
                           isPreview={true}
                           content={content.trim() || '(Belum ada teks pesan)'}
                           category={category || 'Curhat'}
+                          image_url={imagePreview}
                           song_id={selectedSong?.id}
                           song_title={selectedSong?.title}
                           song_artist={selectedSong?.artist}
@@ -712,6 +774,98 @@ function SubmitMenfess() {
                   </div>
                 )}
 
+              </div>
+            </div>
+
+            {/* IMAGE SECTION */}
+            <div className="submit-image-section">
+              <div className="submit-image-header">
+                <div className="submit-image-title-wrap">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M14.5 1h-13A1.5 1.5 0 0 0 0 2.5v11A1.5 1.5 0 0 0 1.5 15h13a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 14.5 1ZM14 13.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V11l3.5-3.5 2.5 2.5 2-2 5 5v.5Zm0-2.62-4.5-4.5-2 2-2.5-2.5L0 9.38V2.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v8.38Z" />
+                  </svg>
+
+                  <span className="submit-image-title">
+                    Tambahkan Foto
+                  </span>
+
+                  <span className="submit-image-optional">
+                    (Opsional)
+                  </span>
+                </div>
+
+                <span className="submit-image-hint">
+                  Lampirkan satu foto pada menfess kamu
+                </span>
+              </div>
+
+              <div className="submit-image-content">
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+
+                    if (!file) return;
+
+                    if (file.size > 5 * 1024 * 1024) {
+                      alert('Ukuran foto maksimal 5 MB.');
+                      e.target.value = '';
+                      return;
+                    }
+
+                    setImageFile(file);
+                    setImagePreview(URL.createObjectURL(file));
+                  }}
+                />
+
+                <label
+                  htmlFor="image-upload"
+                  className="gh-btn gh-btn-primary"
+                  style={{
+                    display: 'inline-flex',
+                    cursor: 'pointer',
+                    marginTop: '10px',
+                  }}
+                >
+                  Pilih Foto
+                </label>
+
+                {imagePreview && (
+                  <div className="submit-image-preview">
+                    <img
+                      src={imagePreview}
+                      alt="Preview foto"
+                      style={{
+                        maxWidth: '300px',
+                        maxHeight: '300px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        display: 'block',
+                        marginTop: '12px',
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      className="gh-btn gh-btn-sm gh-btn-danger"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                      style={{ marginTop: '8px' }}
+                    >
+                      Hapus Foto
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1010,8 +1164,8 @@ function SubmitMenfess() {
 
                 <span
                   className={`submit-form-box__counter ${isOverLimit
-                      ? 'submit-form-box__counter--over'
-                      : ''
+                    ? 'submit-form-box__counter--over'
+                    : ''
                     }`}
                 >
                   {charCount} / {MAX_CHARS} karakter
@@ -1028,9 +1182,9 @@ function SubmitMenfess() {
                 <button
                   type="submit"
                   className="gh-btn gh-btn-primary"
-                  disabled={!isValid}
+                  disabled={!isValid || imageUploading}
                 >
-                  Kirim Menfess
+                  {imageUploading ? 'Mengupload Foto...' : 'Kirim Menfess'}
                 </button>
 
               </div>

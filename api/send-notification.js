@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 
@@ -13,6 +14,8 @@ webpush.setVapidDetails(
 );
 
 export default async function handler(req, res) {
+
+
     if (req.method !== 'POST') {
         return res.status(405).json({
             success: false,
@@ -23,9 +26,24 @@ export default async function handler(req, res) {
     try {
         const { title, body, url } = req.body;
 
+        // Ambil semua user yang terdaftar sebagai moderator
+        const { data: moderators, error: moderatorError } = await supabase
+            .from('moderators')
+            .select('user_id');
+
+        if (moderatorError) {
+            throw moderatorError;
+        }
+
+        const moderatorIds = moderators.map(
+            (moderator) => moderator.user_id
+        );
+
+        // Ambil subscription milik moderator saja
         const { data: subscriptions, error } = await supabase
             .from('push_subscriptions')
-            .select('id, endpoint, p256dh, auth');
+            .select('id, user_id, endpoint, p256dh, auth')
+            .in('user_id', moderatorIds);
 
         if (error) {
             throw error;
