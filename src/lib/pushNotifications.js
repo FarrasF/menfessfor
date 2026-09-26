@@ -18,10 +18,11 @@ export async function subscribeToPush() {
 
     if (!('PushManager' in window)) {
         alert(
-            'PushManager tidak tersedia\n' +
             'Standalone: ' +
-            window.matchMedia('(display-mode: standalone)').matches + '\n' +
-            'iOS: ' +
+            window.matchMedia('(display-mode: standalone)').matches +
+            '\nFullscreen: ' +
+            window.matchMedia('(display-mode: fullscreen)').matches +
+            '\niOS: ' +
             /iPhone|iPad|iPod/i.test(navigator.userAgent)
         );
     }
