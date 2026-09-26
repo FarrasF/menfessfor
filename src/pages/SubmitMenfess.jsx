@@ -219,10 +219,6 @@ function SubmitMenfess() {
   const [activeTab, setActiveTab] = useState('write');
   const [submitted, setSubmitted] = useState(false);
 
-  // Image
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageUploading, setImageUploading] = useState(false);
 
   // Music
   const [musicQuery, setMusicQuery] = useState('');
@@ -399,41 +395,8 @@ function SubmitMenfess() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isValid || imageUploading) return;
+    if (!isValid) return;
 
-    let imageUrl = null;
-
-    // Upload foto ke ImgBB jika user memilih foto
-    if (imageFile) {
-      setImageUploading(true);
-
-      try {
-        const formData = new FormData();
-        formData.append('image', imageFile);
-
-        const uploadResponse = await fetch('/api/upload-image', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const uploadResult = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-          throw new Error(uploadResult.error || 'Upload foto gagal');
-        }
-
-        imageUrl = uploadResult.url;
-      } catch (error) {
-        console.error('Gagal upload foto:', error);
-        alert(`Foto gagal diupload: ${error.message}`);
-        setImageUploading(false);
-        return;
-      }
-
-      setImageUploading(false);
-    }
-
-    // Simpan menfess + URL foto ke Supabase
     const { error } = await supabase
       .from('menfess')
       .insert([
@@ -441,9 +404,6 @@ function SubmitMenfess() {
           content: content.trim(),
           category: category,
           status: 'pending',
-
-          image_url: imageUrl,
-
           song_id: selectedSong?.id ?? null,
           song_title: selectedSong?.title ?? null,
           song_artist: selectedSong?.artist ?? null,
@@ -454,25 +414,9 @@ function SubmitMenfess() {
       ]);
 
     if (error) {
-      console.error('Gagal mengirim menfess:', error);
+      console.error('Error submitting menfess:', error);
       alert('Menfess gagal dikirim. Coba lagi.');
       return;
-    }
-
-    try {
-      await fetch('/api/send-notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: 'Menfess Baru',
-          body: 'Ada menfess baru yang menunggu peninjauan.',
-          url: '/admin',
-        }),
-      });
-    } catch (notificationError) {
-      console.error('Gagal mengirim notifikasi:', notificationError);
     }
 
     setSubmitted(true);
@@ -492,10 +436,6 @@ function SubmitMenfess() {
     setContent('');
     setSubmitted(false);
     setActiveTab('write');
-
-    setImageFile(null);
-    setImagePreview(null);
-    setImageUploading(false);
 
     setMusicQuery('');
     setSongs([]);
@@ -536,11 +476,11 @@ function SubmitMenfess() {
 
             <div className="submit-success__actions">
               <button
-                type="submit"
+                type="button"
                 className="gh-btn gh-btn-primary"
-                disabled={!isValid || imageUploading}
+                onClick={handleReset}
               >
-                {imageUploading ? 'Mengupload Foto...' : 'Kirim Menfess'}
+                Kirim Menfess Lagi
               </button>
 
               <Link to="/" className="gh-btn">
@@ -553,124 +493,261 @@ function SubmitMenfess() {
     );
   }
 
-  // =========================
-  // MAIN PAGE
-  // =========================
+    // =========================
+    // MAIN PAGE
+    // =========================
 
-  return (
-    <main className="page">
-      <div className="container container--sm">
+    return (
+      <main className="page">
+        <div className="container container--sm">
 
-        {/* Page Sub-header */}
-        <div className="submit-header">
-          <div className="submit-header__breadcrumb">
-            <Link to="/" className="submit-header__back-link">
+          {/* Page Sub-header */}
+          <div className="submit-header">
+            <div className="submit-header__breadcrumb">
+              <Link to="/" className="submit-header__back-link">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />
+                </svg>
+
+                <span>Diskusi</span>
+              </Link>
+
+              <span className="submit-header__separator">/</span>
+
+              <span className="submit-header__current">
+                Menfess Baru
+              </span>
+            </div>
+
+            <h1 className="submit-header__title">
+              Buat Menfess Baru
+            </h1>
+
+            <p className="submit-header__desc">
+              Sampaikan isi pikiran, unek-unek, atau cerita secara anonim.
+            </p>
+          </div>
+
+          {/* Anonymous Notice */}
+          <div className="gh-flash-banner">
+            <div className="gh-flash-banner__icon">
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 16 16"
+                fill="var(--color-accent-fg)"
+                aria-hidden="true"
+              >
+                <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+              </svg>
+            </div>
+
+            <div className="gh-flash-banner__text">
+              <strong>Informasi Anonimitas:</strong> Identitas pengirim tidak
+              disimpan. Setiap menfess akan melalui peninjauan moderator demi
+              kenyamanan bersama.
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="submit-layout">
+
+            <div
+              className="submit-layout__avatar"
+              title="Pengirim Anonim"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 16 16"
                 fill="currentColor"
                 aria-hidden="true"
               >
-                <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />
+                <path d="M10.561 8.073a6.005 6.005 0 0 1 3.432 5.142.75.75 0 1 1-1.498.07 4.5 4.5 0 0 0-8.99 0 .75.75 0 0 1-1.498-.07 6.004 6.004 0 0 1 3.431-5.142 3.999 3.999 0 1 1 5.123 0ZM10.5 5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" />
               </svg>
+            </div>
 
-              <span>Diskusi</span>
-            </Link>
-
-            <span className="submit-header__separator">/</span>
-
-            <span className="submit-header__current">
-              Menfess Baru
-            </span>
-          </div>
-
-          <h1 className="submit-header__title">
-            Buat Menfess Baru
-          </h1>
-
-          <p className="submit-header__desc">
-            Sampaikan isi pikiran, unek-unek, atau cerita secara anonim.
-          </p>
-        </div>
-
-        {/* Anonymous Notice */}
-        <div className="gh-flash-banner">
-          <div className="gh-flash-banner__icon">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="var(--color-accent-fg)"
-              aria-hidden="true"
+            <form
+              className="gh-box submit-form-box"
+              onSubmit={handleSubmit}
             >
-              <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
-            </svg>
-          </div>
 
-          <div className="gh-flash-banner__text">
-            <strong>Informasi Anonimitas:</strong> Identitas pengirim tidak
-            disimpan. Setiap menfess akan melalui peninjauan moderator demi
-            kenyamanan bersama.
-          </div>
-        </div>
-
-        {/* Form */}
-        <div className="submit-layout">
-
-          <div
-            className="submit-layout__avatar"
-            title="Pengirim Anonim"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d="M10.561 8.073a6.005 6.005 0 0 1 3.432 5.142.75.75 0 1 1-1.498.07 4.5 4.5 0 0 0-8.99 0 .75.75 0 0 1-1.498-.07 6.004 6.004 0 0 1 3.431-5.142 3.999 3.999 0 1 1 5.123 0ZM10.5 5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" />
-            </svg>
-          </div>
-
-          <form
-            className="gh-box submit-form-box"
-            onSubmit={handleSubmit}
-          >
-
-            {/* Category */}
-            <div className="submit-form-box__section">
-              <div className="submit-form-box__label-group">
-                <span className="submit-form-box__label-title">
-                  Pilih Kategori / Label{' '}
-                  <span className="submit-form-box__required">
-                    *
+              {/* Category */}
+              <div className="submit-form-box__section">
+                <div className="submit-form-box__label-group">
+                  <span className="submit-form-box__label-title">
+                    Pilih Kategori / Label{' '}
+                    <span className="submit-form-box__required">
+                      *
+                    </span>
                   </span>
-                </span>
 
-                <span className="submit-form-box__label-hint">
-                  Pilih salah satu label yang paling sesuai
-                </span>
+                  <span className="submit-form-box__label-hint">
+                    Pilih salah satu label yang paling sesuai
+                  </span>
+                </div>
+
+                <div className="submit-form-box__labels-row">
+                  {CATEGORIES.map((cat) => {
+                    const isSelected = category === cat;
+
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`gh-label submit-label-btn ${getCategoryLabelClass(
+                          cat
+                        )} ${isSelected
+                          ? 'submit-label-btn--selected'
+                          : ''
+                          }`}
+                        onClick={() => setCategory(cat)}
+                        aria-pressed={isSelected}
+                      >
+                        {isSelected && (
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                          </svg>
+                        )}
+
+                        <span>{cat}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="submit-form-box__labels-row">
-                {CATEGORIES.map((cat) => {
-                  const isSelected = category === cat;
+              {/* Editor */}
+              <div className="submit-editor">
 
-                  return (
+                <div className="submit-editor__tabnav">
+                  <div className="submit-editor__tabs">
+
                     <button
-                      key={cat}
                       type="button"
-                      className={`gh-label submit-label-btn ${getCategoryLabelClass(
-                        cat
-                      )} ${isSelected
-                        ? 'submit-label-btn--selected'
+                      className={`submit-editor__tab ${activeTab === 'write'
+                        ? 'submit-editor__tab--active'
                         : ''
                         }`}
-                      onClick={() => setCategory(cat)}
-                      aria-pressed={isSelected}
+                      onClick={() => setActiveTab('write')}
                     >
-                      {isSelected && (
+                      Tulis
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`submit-editor__tab ${activeTab === 'preview'
+                        ? 'submit-editor__tab--active'
+                        : ''
+                        }`}
+                      onClick={() => setActiveTab('preview')}
+                    >
+                      Pratinjau
+                    </button>
+
+                  </div>
+                </div>
+
+                <div className="submit-editor__body">
+
+                  {activeTab === 'write' ? (
+                    <textarea
+                      id="menfess-content"
+                      className="gh-input submit-editor__textarea"
+                      placeholder="Tulis pesan atau ceritamu secara anonim di sini..."
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      rows={8}
+                      maxLength={MAX_CHARS + 50}
+                    />
+                  ) : (
+                    <div className="submit-editor__preview">
+                      {!content.trim() && !selectedSong ? (
+                        <div className="submit-editor__preview-empty">
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 16 16"
+                            fill="var(--color-fg-muted)"
+                            aria-hidden="true"
+                          >
+                            <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
+                          </svg>
+                          <span className="submit-editor__preview-placeholder">
+                            Tidak ada yang bisa dipratinjau. Tulis sesuatu di
+                            tab Tulis atau lampirkan lagu terlebih dahulu.
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="submit-editor__preview-wrap">
+                          <div className="submit-editor__preview-header">
+                            <span className="submit-editor__preview-tag">
+                              Pratinjau Tampilan di Beranda
+                            </span>
+                          </div>
+                          <MenfessCard
+                            isPreview={true}
+                            content={content.trim() || '(Belum ada teks pesan)'}
+                            category={category || 'Curhat'}
+                            song_id={selectedSong?.id}
+                            song_title={selectedSong?.title}
+                            song_artist={selectedSong?.artist}
+                            song_album={selectedSong?.album}
+                            song_cover={selectedSong?.cover}
+                            song_preview={selectedSong?.preview}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+              </div>
+
+
+              {/* MUSIC SECTION */}
+              <div className="submit-music-section">
+                <div className="submit-music-header">
+                  <div className="submit-music-title-wrap">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 2.5a.5.5 0 0 0-.67-.47l-6 2A.5.5 0 0 0 5 4.5v6.085A2.5 2.5 0 1 0 6.5 13V5.424l4.5-1.5v4.661A2.5 2.5 0 1 0 12.5 11V2.5Z" />
+                    </svg>
+                    <span className="submit-music-title">
+                      Tambahkan Lagu
+                    </span>
+                    <span className="submit-music-optional">
+                      (Opsional)
+                    </span>
+                  </div>
+
+                  <span className="submit-music-hint">
+                    Pilih lagu latar yang sesuai dengan isi menfess
+                  </span>
+                </div>
+
+                {/* Selected Song View */}
+                {selectedSong ? (
+                  <div className="submit-music-selected">
+                    <div className="submit-music-selected__header">
+                      <span className="submit-music-selected__badge">
                         <svg
                           width="12"
                           height="12"
@@ -680,522 +757,293 @@ function SubmitMenfess() {
                         >
                           <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
                         </svg>
-                      )}
+                        <span>Lagu Terlampir</span>
+                      </span>
 
-                      <span>{cat}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Editor */}
-            <div className="submit-editor">
-
-              <div className="submit-editor__tabnav">
-                <div className="submit-editor__tabs">
-
-                  <button
-                    type="button"
-                    className={`submit-editor__tab ${activeTab === 'write'
-                      ? 'submit-editor__tab--active'
-                      : ''
-                      }`}
-                    onClick={() => setActiveTab('write')}
-                  >
-                    Tulis
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`submit-editor__tab ${activeTab === 'preview'
-                      ? 'submit-editor__tab--active'
-                      : ''
-                      }`}
-                    onClick={() => setActiveTab('preview')}
-                  >
-                    Pratinjau
-                  </button>
-
-                </div>
-              </div>
-
-              <div className="submit-editor__body">
-
-                {activeTab === 'write' ? (
-                  <textarea
-                    id="menfess-content"
-                    className="gh-input submit-editor__textarea"
-                    placeholder="Tulis pesan atau ceritamu secara anonim di sini..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={8}
-                    maxLength={MAX_CHARS + 50}
-                  />
-                ) : (
-                  <div className="submit-editor__preview">
-                    {!content.trim() && !selectedSong ? (
-                      <div className="submit-editor__preview-empty">
-                        <svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 16 16"
-                          fill="var(--color-fg-muted)"
-                          aria-hidden="true"
-                        >
-                          <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
-                        </svg>
-                        <span className="submit-editor__preview-placeholder">
-                          Tidak ada yang bisa dipratinjau. Tulis sesuatu di
-                          tab Tulis atau lampirkan lagu terlebih dahulu.
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="submit-editor__preview-wrap">
-                        <div className="submit-editor__preview-header">
-                          <span className="submit-editor__preview-tag">
-                            Pratinjau Tampilan di Beranda
-                          </span>
-                        </div>
-                        <MenfessCard
-                          isPreview={true}
-                          content={content.trim() || '(Belum ada teks pesan)'}
-                          category={category || 'Curhat'}
-                          image_url={imagePreview}
-                          song_id={selectedSong?.id}
-                          song_title={selectedSong?.title}
-                          song_artist={selectedSong?.artist}
-                          song_album={selectedSong?.album}
-                          song_cover={selectedSong?.cover}
-                          song_preview={selectedSong?.preview}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              </div>
-            </div>
-
-            {/* IMAGE SECTION */}
-            <div className="submit-image-section">
-              <div className="submit-image-header">
-                <div className="submit-image-title-wrap">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M14.5 1h-13A1.5 1.5 0 0 0 0 2.5v11A1.5 1.5 0 0 0 1.5 15h13a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 14.5 1ZM14 13.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V11l3.5-3.5 2.5 2.5 2-2 5 5v.5Zm0-2.62-4.5-4.5-2 2-2.5-2.5L0 9.38V2.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v8.38Z" />
-                  </svg>
-
-                  <span className="submit-image-title">
-                    Tambahkan Foto
-                  </span>
-
-                  <span className="submit-image-optional">
-                    (Opsional)
-                  </span>
-                </div>
-
-                <span className="submit-image-hint">
-                  Lampirkan satu foto pada menfess kamu
-                </span>
-              </div>
-
-              <div className="submit-image-content">
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-
-                    if (!file) return;
-
-                    if (file.size > 5 * 1024 * 1024) {
-                      alert('Ukuran foto maksimal 5 MB.');
-                      e.target.value = '';
-                      return;
-                    }
-
-                    setImageFile(file);
-                    setImagePreview(URL.createObjectURL(file));
-                  }}
-                />
-
-                <label
-                  htmlFor="image-upload"
-                  className="gh-btn gh-btn-primary"
-                  style={{
-                    display: 'inline-flex',
-                    cursor: 'pointer',
-                    marginTop: '10px',
-                  }}
-                >
-                  Pilih Foto
-                </label>
-
-                {imagePreview && (
-                  <div className="submit-image-preview">
-                    <img
-                      src={imagePreview}
-                      alt="Preview foto"
-                      style={{
-                        maxWidth: '300px',
-                        maxHeight: '300px',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        display: 'block',
-                        marginTop: '12px',
-                      }}
-                    />
-
-                    <button
-                      type="button"
-                      className="gh-btn gh-btn-sm gh-btn-danger"
-                      onClick={() => {
-                        setImageFile(null);
-                        setImagePreview(null);
-                      }}
-                      style={{ marginTop: '8px' }}
-                    >
-                      Hapus Foto
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* MUSIC SECTION */}
-            <div className="submit-music-section">
-              <div className="submit-music-header">
-                <div className="submit-music-title-wrap">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 2.5a.5.5 0 0 0-.67-.47l-6 2A.5.5 0 0 0 5 4.5v6.085A2.5 2.5 0 1 0 6.5 13V5.424l4.5-1.5v4.661A2.5 2.5 0 1 0 12.5 11V2.5Z" />
-                  </svg>
-                  <span className="submit-music-title">
-                    Tambahkan Lagu
-                  </span>
-                  <span className="submit-music-optional">
-                    (Opsional)
-                  </span>
-                </div>
-
-                <span className="submit-music-hint">
-                  Pilih lagu latar yang sesuai dengan isi menfess
-                </span>
-              </div>
-
-              {/* Selected Song View */}
-              {selectedSong ? (
-                <div className="submit-music-selected">
-                  <div className="submit-music-selected__header">
-                    <span className="submit-music-selected__badge">
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-                      </svg>
-                      <span>Lagu Terlampir</span>
-                    </span>
-
-                    <button
-                      type="button"
-                      className="gh-btn gh-btn-sm gh-btn-danger submit-music-selected__remove-btn"
-                      onClick={handleRemoveSong}
-                      title="Hapus lagu yang dipilih"
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.75.75 0 0 0 .746.675h4.196a.75.75 0 0 0 .746-.675l.66-6.6a.75.75 0 0 0-1.492-.15l-.615 6.15H6.603l-.615-6.15a.75.75 0 0 0-1.492.15Z" />
-                      </svg>
-                      <span>Hapus Lagu</span>
-                    </button>
-                  </div>
-
-                  <div className="submit-music-selected__content">
-                    {selectedSong.cover && (
-                      <img
-                        src={selectedSong.cover}
-                        alt={selectedSong.title}
-                        className="submit-music-selected__cover"
-                      />
-                    )}
-
-                    <div className="submit-music-selected__info">
-                      <div className="submit-music-selected__title">
-                        {selectedSong.title}
-                      </div>
-
-                      <div className="submit-music-selected__artist">
-                        {selectedSong.artist}
-                      </div>
-
-                      {selectedSong.album && (
-                        <div className="submit-music-selected__album">
-                          Album: {selectedSong.album}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {selectedSong.preview && (
-                    <MiniAudioPlayer
-                      src={selectedSong.preview}
-                      currentAudioRef={currentAudioRef}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="ig-music-sheet">
-                  {/* Search Bar */}
-                  <div className="ig-music-search">
-                    <svg className="ig-music-search__icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.5 4.5 0 1 0-9 0 4.5 4.5 0 0 0 9 0Z" />
-                    </svg>
-                    <input
-                      type="text"
-                      className="ig-music-search__input"
-                      placeholder="Cari..."
-                      value={musicQuery}
-                      onChange={(e) => handleSearchInputChange(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          executeMusicSearch();
-                        }
-                      }}
-                    />
-                    {musicQuery && (
                       <button
                         type="button"
-                        className="ig-music-search__clear"
-                        onClick={() => {
-                          setMusicQuery('');
-                          setSongs([]);
-                          setMusicError('');
-                          if (listAudioRef.current) {
-                            listAudioRef.current.pause();
-                            setPlayingSongId(null);
-                          }
-                        }}
-                        aria-label="Hapus pencarian"
+                        className="gh-btn gh-btn-sm gh-btn-danger submit-music-selected__remove-btn"
+                        onClick={handleRemoveSong}
+                        title="Hapus lagu yang dipilih"
                       >
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                          <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.75.75 0 0 0 .746.675h4.196a.75.75 0 0 0 .746-.675l.66-6.6a.75.75 0 0 0-1.492-.15l-.615 6.15H6.603l-.615-6.15a.75.75 0 0 0-1.492.15Z" />
                         </svg>
+                        <span>Hapus Lagu</span>
                       </button>
+                    </div>
+
+                    <div className="submit-music-selected__content">
+                      {selectedSong.cover && (
+                        <img
+                          src={selectedSong.cover}
+                          alt={selectedSong.title}
+                          className="submit-music-selected__cover"
+                        />
+                      )}
+
+                      <div className="submit-music-selected__info">
+                        <div className="submit-music-selected__title">
+                          {selectedSong.title}
+                        </div>
+
+                        <div className="submit-music-selected__artist">
+                          {selectedSong.artist}
+                        </div>
+
+                        {selectedSong.album && (
+                          <div className="submit-music-selected__album">
+                            Album: {selectedSong.album}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {selectedSong.preview && (
+                      <MiniAudioPlayer
+                        src={selectedSong.preview}
+                        currentAudioRef={currentAudioRef}
+                      />
                     )}
                   </div>
-
-                  {/* Loading State */}
-                  {musicLoading && (
-                    <div className="ig-music-loading">
-                      <svg className="gh-music-spinner" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
-                        <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                ) : (
+                  <div className="ig-music-sheet">
+                    {/* Search Bar */}
+                    <div className="ig-music-search">
+                      <svg className="ig-music-search__icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.5 4.5 0 1 0-9 0 4.5 4.5 0 0 0 9 0Z" />
                       </svg>
-                      <span>Mencari lagu...</span>
+                      <input
+                        type="text"
+                        className="ig-music-search__input"
+                        placeholder="Cari..."
+                        value={musicQuery}
+                        onChange={(e) => handleSearchInputChange(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            executeMusicSearch();
+                          }
+                        }}
+                      />
+                      {musicQuery && (
+                        <button
+                          type="button"
+                          className="ig-music-search__clear"
+                          onClick={() => {
+                            setMusicQuery('');
+                            setSongs([]);
+                            setMusicError('');
+                            if (listAudioRef.current) {
+                              listAudioRef.current.pause();
+                              setPlayingSongId(null);
+                            }
+                          }}
+                          aria-label="Hapus pencarian"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
-                  )}
 
-                  {/* Error State */}
-                  {musicError && (
-                    <div className="submit-music-error">
-                      <span>{musicError}</span>
-                    </div>
-                  )}
+                    {/* Loading State */}
+                    {musicLoading && (
+                      <div className="ig-music-loading">
+                        <svg className="gh-music-spinner" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+                          <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                        </svg>
+                        <span>Mencari lagu...</span>
+                      </div>
+                    )}
 
-                  {/* No Results State */}
-                  {!musicLoading && !musicError && musicQuery.trim() && songs.length === 0 && (
-                    <div className="ig-music-empty">
-                      <span>Tidak ada lagu yang cocok dengan "{musicQuery}"</span>
-                    </div>
-                  )}
+                    {/* Error State */}
+                    {musicError && (
+                      <div className="submit-music-error">
+                        <span>{musicError}</span>
+                      </div>
+                    )}
 
-                  {/* Audio element for list preview playback */}
-                  <audio
-                    ref={listAudioRef}
-                    preload="none"
-                    onEnded={() => setPlayingSongId(null)}
-                    onError={() => {
-                      setPlayingSongId(null);
-                      setIsAudioBuffering(false);
-                    }}
-                    onWaiting={() => setIsAudioBuffering(true)}
-                    onPlaying={() => setIsAudioBuffering(false)}
-                    onPause={() => setIsAudioBuffering(false)}
-                  />
+                    {/* No Results State */}
+                    {!musicLoading && !musicError && musicQuery.trim() && songs.length === 0 && (
+                      <div className="ig-music-empty">
+                        <span>Tidak ada lagu yang cocok dengan "{musicQuery}"</span>
+                      </div>
+                    )}
 
-                  {/* Songs List - Only displayed when query exists and songs are found */}
-                  {musicQuery.trim() && songs.length > 0 && (
-                    <div className="ig-music-list">
-                      {songs.map((song) => {
-                        const isThisPlaying = playingSongId === song.id;
-                        const isThisBuffering = isThisPlaying && isAudioBuffering;
-                        const isSelected = selectedSong?.id === song.id;
+                    {/* Audio element for list preview playback */}
+                    <audio
+                      ref={listAudioRef}
+                      preload="none"
+                      onEnded={() => setPlayingSongId(null)}
+                      onError={() => {
+                        setPlayingSongId(null);
+                        setIsAudioBuffering(false);
+                      }}
+                      onWaiting={() => setIsAudioBuffering(true)}
+                      onPlaying={() => setIsAudioBuffering(false)}
+                      onPause={() => setIsAudioBuffering(false)}
+                    />
 
-                        return (
-                          <div
-                            key={song.id}
-                            className={`ig-music-item ${isThisPlaying ? 'ig-music-item--playing' : ''} ${isSelected ? 'ig-music-item--selected' : ''}`}
-                            onClick={(e) => handleTogglePlaySong(song, e)}
-                            title="Klik baris untuk memutar preview lagu"
-                          >
-                            {/* Album Cover with Play/Equalizer State */}
-                            <div className="ig-music-item__cover-wrap">
-                              <img
-                                src={song.cover}
-                                alt={song.title}
-                                className="ig-music-item__cover"
-                                loading="lazy"
-                              />
-                              {isThisPlaying ? (
-                                <div className="ig-music-item__playing-overlay">
-                                  {isThisBuffering ? (
-                                    <svg className="gh-music-spinner" width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                      <circle cx="8" cy="8" r="6" stroke="#fff" strokeWidth="2.5" strokeOpacity="0.25" />
-                                      <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                    {/* Songs List - Only displayed when query exists and songs are found */}
+                    {musicQuery.trim() && songs.length > 0 && (
+                      <div className="ig-music-list">
+                        {songs.map((song) => {
+                          const isThisPlaying = playingSongId === song.id;
+                          const isThisBuffering = isThisPlaying && isAudioBuffering;
+                          const isSelected = selectedSong?.id === song.id;
+
+                          return (
+                            <div
+                              key={song.id}
+                              className={`ig-music-item ${isThisPlaying ? 'ig-music-item--playing' : ''} ${isSelected ? 'ig-music-item--selected' : ''}`}
+                              onClick={(e) => handleTogglePlaySong(song, e)}
+                              title="Klik baris untuk memutar preview lagu"
+                            >
+                              {/* Album Cover with Play/Equalizer State */}
+                              <div className="ig-music-item__cover-wrap">
+                                <img
+                                  src={song.cover}
+                                  alt={song.title}
+                                  className="ig-music-item__cover"
+                                  loading="lazy"
+                                />
+                                {isThisPlaying ? (
+                                  <div className="ig-music-item__playing-overlay">
+                                    {isThisBuffering ? (
+                                      <svg className="gh-music-spinner" width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                        <circle cx="8" cy="8" r="6" stroke="#fff" strokeWidth="2.5" strokeOpacity="0.25" />
+                                        <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                                      </svg>
+                                    ) : (
+                                      <span className="gh-music-eq gh-music-eq--compact">
+                                        <span className="gh-music-eq__bar" />
+                                        <span className="gh-music-eq__bar" />
+                                        <span className="gh-music-eq__bar" />
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="ig-music-item__hover-overlay">
+                                    <svg width="10" height="10" viewBox="0 0 16 16" fill="#ffffff">
+                                      <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
                                     </svg>
-                                  ) : (
-                                    <span className="gh-music-eq gh-music-eq--compact">
-                                      <span className="gh-music-eq__bar" />
-                                      <span className="gh-music-eq__bar" />
-                                      <span className="gh-music-eq__bar" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Song Title & Subtitle */}
+                              <div className="ig-music-item__details">
+                                <div className="ig-music-item__title-row">
+                                  <span className="ig-music-item__title" title={song.title}>
+                                    {song.title}
+                                  </span>
+                                  {song.explicit && (
+                                    <span className="ig-music-item__explicit" title="Explicit">
+                                      E
                                     </span>
                                   )}
                                 </div>
-                              ) : (
-                                <div className="ig-music-item__hover-overlay">
-                                  <svg width="10" height="10" viewBox="0 0 16 16" fill="#ffffff">
-                                    <path d="M4.5 2.25a.75.75 0 0 1 1.14-.64l8.5 5.75a.75.75 0 0 1 0 1.28l-8.5 5.75A.75.75 0 0 1 4.5 13.75V2.25Z" />
-                                  </svg>
+
+                                <div className="ig-music-item__subtitle">
+                                  <span>{song.artist}</span>
+                                  {song.album && (
+                                    <>
+                                      <span className="ig-music-item__dot">•</span>
+                                      <span>{song.album}</span>
+                                    </>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-
-                            {/* Song Title & Subtitle */}
-                            <div className="ig-music-item__details">
-                              <div className="ig-music-item__title-row">
-                                <span className="ig-music-item__title" title={song.title}>
-                                  {song.title}
-                                </span>
-                                {song.explicit && (
-                                  <span className="ig-music-item__explicit" title="Explicit">
-                                    E
-                                  </span>
-                                )}
                               </div>
 
-                              <div className="ig-music-item__subtitle">
-                                <span>{song.artist}</span>
-                                {song.album && (
-                                  <>
-                                    <span className="ig-music-item__dot">•</span>
-                                    <span>{song.album}</span>
-                                  </>
-                                )}
+                              {/* Action: Clean Pilih button (bookmark removed) */}
+                              <div className="ig-music-item__action">
+                                <button
+                                  type="button"
+                                  className="gh-btn gh-btn-sm gh-btn-primary ig-music-item__select-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelectSong(song);
+                                  }}
+                                  title="Pilih lagu ini untuk menfess"
+                                >
+                                  Pilih
+                                </button>
                               </div>
                             </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
-                            {/* Action: Clean Pilih button (bookmark removed) */}
-                            <div className="ig-music-item__action">
-                              <button
-                                type="button"
-                                className="gh-btn gh-btn-sm gh-btn-primary ig-music-item__select-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSelectSong(song);
-                                }}
-                                title="Pilih lagu ini untuk menfess"
-                              >
-                                Pilih
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+              {/* Footer */}
+              <div className="submit-form-box__footer">
 
-            {/* Footer */}
-            <div className="submit-form-box__footer">
+                <div className="submit-form-box__meta">
 
-              <div className="submit-form-box__meta">
+                  <span className="submit-form-box__badge">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M8.533.133a1.749 1.749 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48v4.27c0 4.29 2.78 8.01 6.74 9.17a1.749 1.749 0 0 0 .52 0c3.96-1.16 6.74-4.88 6.74-9.17V3.48a1.75 1.75 0 0 0-1.217-1.667Zm-.614 1.44a.25.25 0 0 1 .162 0l5.25 1.68a.25.25 0 0 1 .169.227v4.27c0 3.56-2.29 6.64-5.5 7.63a.25.25 0 0 1-.16 0C4.79 14.43 2.5 11.35 2.5 7.75V3.48a.25.25 0 0 1 .169-.227Z" />
+                    </svg>
 
-                <span className="submit-form-box__badge">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    aria-hidden="true"
+                    <span>100% Anonim</span>
+                  </span>
+
+                  <span className="submit-form-box__meta-dot">
+                    •
+                  </span>
+
+                  <span
+                    className={`submit-form-box__counter ${isOverLimit
+                      ? 'submit-form-box__counter--over'
+                      : ''
+                      }`}
                   >
-                    <path d="M8.533.133a1.749 1.749 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48v4.27c0 4.29 2.78 8.01 6.74 9.17a1.749 1.749 0 0 0 .52 0c3.96-1.16 6.74-4.88 6.74-9.17V3.48a1.75 1.75 0 0 0-1.217-1.667Zm-.614 1.44a.25.25 0 0 1 .162 0l5.25 1.68a.25.25 0 0 1 .169.227v4.27c0 3.56-2.29 6.64-5.5 7.63a.25.25 0 0 1-.16 0C4.79 14.43 2.5 11.35 2.5 7.75V3.48a.25.25 0 0 1 .169-.227Z" />
-                  </svg>
+                    {charCount} / {MAX_CHARS} karakter
+                  </span>
 
-                  <span>100% Anonim</span>
-                </span>
+                </div>
 
-                <span className="submit-form-box__meta-dot">
-                  •
-                </span>
+                <div className="submit-form-box__actions">
 
-                <span
-                  className={`submit-form-box__counter ${isOverLimit
-                    ? 'submit-form-box__counter--over'
-                    : ''
-                    }`}
-                >
-                  {charCount} / {MAX_CHARS} karakter
-                </span>
+                  <Link to="/" className="gh-btn">
+                    Batal
+                  </Link>
 
-              </div>
+                  <button
+                    type="submit"
+                    className="gh-btn gh-btn-primary"
+                    disabled={!isValid}
+                  >
+                    {'Kirim Menfess'}
+                  </button>
 
-              <div className="submit-form-box__actions">
-
-                <Link to="/" className="gh-btn">
-                  Batal
-                </Link>
-
-                <button
-                  type="submit"
-                  className="gh-btn gh-btn-primary"
-                  disabled={!isValid || imageUploading}
-                >
-                  {imageUploading ? 'Mengupload Foto...' : 'Kirim Menfess'}
-                </button>
+                </div>
 
               </div>
 
-            </div>
-
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
-    </main>
-  );
+      </main>
+    );
 }
 
 export default SubmitMenfess;
