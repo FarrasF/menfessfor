@@ -17,7 +17,7 @@ export async function subscribeToPush() {
     }
 
     if (!('PushManager' in window)) {
-        throw new Error('Browser tidak mendukung Push Notification.');
+        throw new Error('PushManager tidak tersedia di device ini');
     }
 
     const permission = await Notification.requestPermission();
