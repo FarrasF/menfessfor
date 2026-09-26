@@ -17,7 +17,13 @@ export async function subscribeToPush() {
     }
 
     if (!('PushManager' in window)) {
-        throw new Error('PushManager tidak tersedia di device ini');
+        alert(
+            'PushManager tidak tersedia\n' +
+            'Standalone: ' +
+            window.matchMedia('(display-mode: standalone)').matches + '\n' +
+            'iOS: ' +
+            /iPhone|iPad|iPod/i.test(navigator.userAgent)
+        );
     }
 
     const permission = await Notification.requestPermission();
