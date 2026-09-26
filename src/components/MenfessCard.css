@@ -49,12 +49,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .gh-card__author {
   color: var(--color-fg-default);
+  font-weight: 600;
+  font-size: var(--text-xs);
 }
 
 .gh-card__id {
@@ -62,6 +66,12 @@
   font-weight: 500;
   color: var(--color-fg-muted);
   font-size: var(--text-xs);
+}
+
+.gh-card__meta-separator {
+  color: var(--color-border-default);
+  font-size: 10px;
+  user-select: none;
 }
 
 .gh-card__title-row {
@@ -218,20 +228,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
   font-size: var(--text-xs);
   color: var(--color-fg-muted);
   margin-top: var(--space-1);
+  flex-wrap: wrap;
 }
 
 .gh-card__time {
   white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
 }
 
 .gh-card__stats {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .gh-card__stat {
@@ -240,10 +255,12 @@
   gap: 4px;
   color: var(--color-fg-muted);
   font-size: var(--text-xs);
+  line-height: 1;
 }
 
 .gh-card__stat svg {
   color: var(--color-fg-muted);
+  flex-shrink: 0;
 }
 
 /* ============================================
@@ -266,4 +283,19 @@
   white-space: pre-wrap;
   word-break: break-word;
   -webkit-line-clamp: unset;
+}
+
+@media (max-width: 640px) {
+  .gh-card {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .gh-card__meta {
+    gap: 6px 10px;
+  }
+
+  .gh-card__stats {
+    gap: 10px;
+  }
 }

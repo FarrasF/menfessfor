@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BrandLogo from '../components/BrandLogo';
 import { supabase } from '../lib/supabase';
+import { subscribeToPush } from '../lib/pushNotifications';
 import './Admin.css';
 
 function getCategoryLabelClass(category) {
@@ -35,6 +36,16 @@ function Admin() {
     setReports((current) =>
       current.filter((report) => report.id !== reportId)
     );
+  }
+
+  async function handleEnableNotifications() {
+    try {
+      await subscribeToPush();
+      alert('Notifikasi berhasil diaktifkan.');
+    } catch (error) {
+      console.error('Push notification error:', error);
+      alert(error.message);
+    }
   }
 
   async function deleteReportedContent(report) {
@@ -125,19 +136,48 @@ function Admin() {
 
     if (error) {
       console.error('Auth error:', error);
+      setLoading(false);
       return;
     }
 
+    if (!data.session) {
+      setSession(null);
+      setLoading(false);
+      return;
+    }
+
+    const userId = data.session.user.id;
+
+    // Cek apakah user terdaftar sebagai moderator
+    const { data: moderator, error: moderatorError } = await supabase
+      .from('moderators')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (moderatorError) {
+      console.error('Gagal mengecek moderator:', moderatorError);
+      setSession(null);
+      setLoginError('Gagal memverifikasi akun moderator.');
+      setLoading(false);
+      return;
+    }
+
+    if (!moderator) {
+      await supabase.auth.signOut();
+      setSession(null);
+      setLoginError('Akun ini tidak memiliki akses moderator.');
+      setLoading(false);
+      return;
+    }
+
+    // User memang moderator
     setSession(data.session);
 
-    if (data.session) {
-      fetchPendingMenfess();
-      fetchReports();
-      fetchApprovedCount();
-      fetchApprovedMenfess();
-    } else {
-      setLoading(false);
-    }
+    fetchPendingMenfess();
+    fetchReports();
+    fetchApprovedCount();
+    fetchApprovedMenfess();
   }
 
   async function handleLogin(e) {
@@ -158,6 +198,31 @@ function Admin() {
       return;
     }
 
+    const userId = data.user.id;
+
+    // Cek apakah user adalah moderator
+    const { data: moderator, error: moderatorError } = await supabase
+      .from('moderators')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (moderatorError) {
+      console.error('Gagal mengecek moderator:', moderatorError);
+      await supabase.auth.signOut();
+      setLoginError('Gagal memverifikasi akun moderator.');
+      setLoggingIn(false);
+      return;
+    }
+
+    if (!moderator) {
+      await supabase.auth.signOut();
+      setLoginError('Akun ini tidak memiliki akses moderator.');
+      setLoggingIn(false);
+      return;
+    }
+
+    // User memang moderator
     setSession(data.session);
     setLoggingIn(false);
 
@@ -425,6 +490,15 @@ function Admin() {
                   {session.user.email}
                 </span>
               )}
+
+              <button
+                type="button"
+                className="gh-btn gh-btn-sm"
+                onClick={handleEnableNotifications}
+              >
+                Aktifkan Notifikasi
+              </button>
+
               <button
                 type="button"
                 className="gh-btn gh-btn-sm admin-header__logout"
