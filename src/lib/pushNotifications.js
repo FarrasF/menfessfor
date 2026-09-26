@@ -12,20 +12,39 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export async function subscribeToPush() {
+    alert(
+        'DEBUG 1\n' +
+        'Standalone: ' +
+        window.matchMedia('(display-mode: standalone)').matches +
+        '\nFullscreen: ' +
+        window.matchMedia('(display-mode: fullscreen)').matches +
+        '\niOS: ' +
+        /iPhone|iPad|iPod/i.test(navigator.userAgent) +
+        '\nNotification: ' +
+        typeof Notification +
+        '\nPushManager: ' +
+        typeof PushManager +
+        '\nServiceWorker: ' +
+        ('serviceWorker' in navigator)
+    );
+
     if (!('serviceWorker' in navigator)) {
         throw new Error('Browser tidak mendukung Service Worker.');
     }
 
     if (!('PushManager' in window)) {
-        alert(
-            'Standalone: ' +
-            window.matchMedia('(display-mode: standalone)').matches +
-            '\nFullscreen: ' +
-            window.matchMedia('(display-mode: fullscreen)').matches +
-            '\niOS: ' +
-            /iPhone|iPad|iPod/i.test(navigator.userAgent)
-        );
+        throw new Error('Browser tidak mendukung Push Notification.');
     }
+
+    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+
+    alert(
+        'DEBUG 2\n' +
+        'VAPID key ada: ' +
+        !!vapidKey +
+        '\nPanjang key: ' +
+        (vapidKey ? vapidKey.length : 'undefined')
+    );
 
     const permission = await Notification.requestPermission();
 
@@ -44,9 +63,7 @@ export async function subscribeToPush() {
         existingSubscription ||
         await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(
-                import.meta.env.VITE_VAPID_PUBLIC_KEY
-            ),
+            applicationServerKey: urlBase64ToUint8Array(vapidKey),
         });
 
     const subscriptionJSON = subscription.toJSON();
