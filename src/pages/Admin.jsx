@@ -132,6 +132,34 @@ function Admin() {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (!session) return;
+
+    const channel = supabase
+      .channel('realtime-menfess')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'menfess',
+        },
+        (payload) => {
+          if (payload.new.status === 'pending') {
+            setMenfess((current) => [
+              payload.new,
+              ...current,
+            ]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session]);
+
   async function checkAdmin() {
     const { data, error } = await supabase.auth.getSession();
 
