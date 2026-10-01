@@ -262,6 +262,7 @@ function MenfessCard({
   id,
   content,
   category,
+  url_gambar,
   likes,
   comments_count,
   created_at,
@@ -295,6 +296,22 @@ function MenfessCard({
             {category || 'Umum'}
           </span>
         </div>
+
+        {url_gambar && (
+          <img
+            src={url_gambar}
+<<<<<<< Updated upstream
+            alt="Gambar pada menfess"
+            className="gh-card__image"
+            loading="lazy"
+            draggable={false}
+=======
+            alt="Gambar lampiran menfess"
+            className="gh-card__image"
+            loading="lazy"
+>>>>>>> Stashed changes
+          />
+        )}
 
         {/* Music Player Row if song exists */}
         {hasSong && (

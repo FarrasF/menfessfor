@@ -4,9 +4,92 @@ import MenfessCard from '../components/MenfessCard';
 import { CATEGORIES } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
 import { searchMusic, getMusicById } from '../lib/music';
+import ImageCropper from '../components/ImageCropper';
 import './SubmitMenfess.css';
 
 const MAX_CHARS = 500;
+<<<<<<< Updated upstream
+const MAX_IMAGE_SIZE = 30 * 1024 * 1024;
+const MAX_CROPPED_IMAGE_SIZE = 3.5 * 1024 * 1024;
+
+function getImageDimensions(image, viewportSize, zoom) {
+  const scale = Math.max(
+    viewportSize / image.naturalWidth,
+    viewportSize / image.naturalHeight
+  ) * zoom;
+
+  return {
+    width: image.naturalWidth * scale,
+    height: image.naturalHeight * scale,
+  };
+}
+
+function constrainCropPosition(position, image, viewportSize, zoom) {
+  if (!image || !viewportSize) return position;
+
+  const dimensions = getImageDimensions(image, viewportSize, zoom);
+  const maxX = Math.max(0, (dimensions.width - viewportSize) / 2);
+  const maxY = Math.max(0, (dimensions.height - viewportSize) / 2);
+
+  return {
+    x: Math.max(-maxX, Math.min(maxX, position.x)),
+    y: Math.max(-maxY, Math.min(maxY, position.y)),
+  };
+}
+
+async function createCroppedImage(imageSource, cropPosition, zoom, viewportSize) {
+  const image = await new Promise((resolve, reject) => {
+    const loadedImage = new Image();
+    loadedImage.onload = () => resolve(loadedImage);
+    loadedImage.onerror = () => reject(new Error('Gambar gagal dibaca.'));
+    loadedImage.src = imageSource;
+  });
+
+  const dimensions = getImageDimensions(image, viewportSize, zoom);
+  const sourceSize = viewportSize * (image.naturalWidth / dimensions.width);
+  const imageLeft = (viewportSize - dimensions.width) / 2 + cropPosition.x;
+  const imageTop = (viewportSize - dimensions.height) / 2 + cropPosition.y;
+  const sourceX = Math.max(0, Math.min(image.naturalWidth - sourceSize, -imageLeft * image.naturalWidth / dimensions.width));
+  const sourceY = Math.max(0, Math.min(image.naturalHeight - sourceSize, -imageTop * image.naturalHeight / dimensions.height));
+  const canvas = document.createElement('canvas');
+  let outputSize = Math.min(1800, Math.floor(sourceSize));
+
+  for (let attempt = 0; attempt < 7; attempt += 1) {
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    canvas.getContext('2d').drawImage(
+      image,
+      sourceX,
+      sourceY,
+      sourceSize,
+      sourceSize,
+      0,
+      0,
+      outputSize,
+      outputSize
+    );
+
+    const quality = Math.max(0.48, 0.88 - attempt * 0.08);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+
+    if (blob && blob.size <= MAX_CROPPED_IMAGE_SIZE) return blob;
+    outputSize = Math.floor(outputSize * 0.8);
+  }
+
+  throw new Error('Ukuran hasil crop terlalu besar. Coba crop bagian yang lebih kecil.');
+=======
+const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Gambar gagal dibaca.'));
+    reader.readAsDataURL(file);
+  });
+>>>>>>> Stashed changes
+}
 
 function getCategoryLabelClass(category) {
   const map = {
@@ -218,6 +301,30 @@ function SubmitMenfess() {
   const [content, setContent] = useState('');
   const [activeTab, setActiveTab] = useState('write');
   const [submitted, setSubmitted] = useState(false);
+<<<<<<< Updated upstream
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [imageSource, setImageSource] = useState('');
+  const [croppedImage, setCroppedImage] = useState(null);
+  const [croppedImageUrl, setCroppedImageUrl] = useState('');
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropImageLoaded, setCropImageLoaded] = useState(false);
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropViewportSize, setCropViewportSize] = useState(320);
+  const [imageError, setImageError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const cropViewportRef = useRef(null);
+  const cropImageRef = useRef(null);
+  const cropDragRef = useRef(null);
+  const imageInputRef = useRef(null);
+=======
+  const [cropSource, setCropSource] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [imageError, setImageError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+>>>>>>> Stashed changes
 
 
   // Music
@@ -237,6 +344,17 @@ function SubmitMenfess() {
   const currentAudioRef = useRef(null);
 
   useEffect(() => {
+    if (!imageFile) {
+      setImagePreviewUrl('');
+      return undefined;
+    }
+
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [imageFile]);
+
+  useEffect(() => {
     document.title = 'Menfess Baru · menfessfor';
     return () => {
       if (listAudioRef.current) {
@@ -251,13 +369,150 @@ function SubmitMenfess() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!selectedImageFile) return undefined;
+
+    const source = URL.createObjectURL(selectedImageFile);
+    setImageSource(source);
+    return () => URL.revokeObjectURL(source);
+  }, [selectedImageFile]);
+
+  useEffect(() => {
+    if (!croppedImage) {
+      setCroppedImageUrl('');
+      return undefined;
+    }
+
+    const previewUrl = URL.createObjectURL(croppedImage);
+    setCroppedImageUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [croppedImage]);
+
+  useEffect(() => {
+    if (!cropOpen || !cropViewportRef.current) return undefined;
+
+    const viewport = cropViewportRef.current;
+    const updateSize = () => setCropViewportSize(viewport.clientWidth);
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(viewport);
+    updateSize();
+
+    return () => observer.disconnect();
+  }, [cropOpen, imageSource]);
+
   const charCount = content.length;
   const isOverLimit = charCount > MAX_CHARS;
 
   const isValid =
     category &&
     content.trim().length > 0 &&
-    !isOverLimit;
+    !isOverLimit &&
+    !submitting;
+
+<<<<<<< Updated upstream
+  const handleImageSelection = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setImageError('Pilih gambar JPG, PNG, atau WebP. Video dan format lain tidak didukung.');
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+=======
+  const handleImageSelect = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    setImageError('');
+
+    if (!file) return;
+    if (!IMAGE_TYPES.includes(file.type)) {
+      setImageError('Pilih file gambar JPG, PNG, WebP, GIF, atau AVIF. Video tidak didukung.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+>>>>>>> Stashed changes
+      setImageError('Ukuran gambar maksimal 30 MB.');
+      return;
+    }
+
+<<<<<<< Updated upstream
+    setImageError('');
+    setCropPosition({ x: 0, y: 0 });
+    setCropZoom(1);
+    setCropImageLoaded(false);
+    setSelectedImageFile(file);
+    setCropOpen(true);
+  };
+
+  const handleCropPointerDown = (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    cropDragRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      position: cropPosition,
+    };
+  };
+
+  const handleCropPointerMove = (event) => {
+    const drag = cropDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    setCropPosition(constrainCropPosition({
+      x: drag.position.x + event.clientX - drag.x,
+      y: drag.position.y + event.clientY - drag.y,
+    }, cropImageRef.current, cropViewportSize, cropZoom));
+  };
+
+  const handleCropPointerUp = (event) => {
+    if (cropDragRef.current?.pointerId === event.pointerId) {
+      cropDragRef.current = null;
+    }
+  };
+
+  const handleCancelCrop = () => {
+    setCropOpen(false);
+    setCropImageLoaded(false);
+    setImageSource('');
+    setSelectedImageFile(null);
+  };
+
+  const handleConfirmCrop = async () => {
+    try {
+      const blob = await createCroppedImage(
+        imageSource,
+        cropPosition,
+        cropZoom,
+        cropViewportSize
+      );
+      setCroppedImage(blob);
+      setImageError('');
+      setCropOpen(false);
+      setCropImageLoaded(false);
+      setImageSource('');
+      setSelectedImageFile(null);
+    } catch (error) {
+      setImageError(error.message || 'Gagal memotong gambar.');
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setCroppedImage(null);
+=======
+    setCropSource(file);
+  };
+
+  const handleCropApply = (file) => {
+    setImageFile(file);
+    setCropSource(null);
+>>>>>>> Stashed changes
+    setImageError('');
+  };
 
   // =========================
   // MUSIC SEARCH
@@ -395,10 +650,52 @@ function SubmitMenfess() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isValid) return;
+    if (!isValid || submitting) return;
 
+    setSubmitting(true);
+
+    const menfessData = {
+      content: content.trim(),
+      category,
+      status: 'pending',
+      song_id: selectedSong?.id ?? null,
+      song_title: selectedSong?.title ?? null,
+      song_artist: selectedSong?.artist ?? null,
+      song_album: selectedSong?.album ?? null,
+      song_cover: selectedSong?.cover ?? null,
+      song_preview: selectedSong?.preview ?? null,
+    };
+
+    if (imageFile) {
+      try {
+        const response = await fetch('/api/submit-menfess', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...menfessData,
+            image: await fileToDataUrl(imageFile),
+          }),
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Menfess bergambar gagal dikirim.');
+        }
+
+        setSubmitted(true);
+      } catch (error) {
+        console.error('Error submitting menfess image:', error);
+        alert(error.message || 'Menfess gagal dikirim. Coba lagi.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+<<<<<<< Updated upstream
     const { error } = await supabase
       .from('menfess')
+<<<<<<< Updated upstream
       .insert([
         {
           content: content.trim(),
@@ -412,14 +709,83 @@ function SubmitMenfess() {
           song_preview: selectedSong?.preview ?? null,
         },
       ]);
+=======
+      .insert([menfessData]);
+>>>>>>> Stashed changes
 
     if (error) {
       console.error('Error submitting menfess:', error);
       alert('Menfess gagal dikirim. Coba lagi.');
+      setSubmitting(false);
       return;
-    }
+=======
+    setSubmitting(true);
+    setImageError('');
+    let uploadToken = null;
 
+<<<<<<< Updated upstream
+    try {
+      let imageUrl = null;
+
+      if (croppedImage) {
+        const uploadResponse = await fetch('/api/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: croppedImage,
+        });
+        const uploadResult = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(uploadResult.error || 'Gambar gagal diunggah.');
+        }
+
+        imageUrl = uploadResult.imageUrl;
+        uploadToken = uploadResult.uploadToken;
+      }
+
+      const { error } = await supabase
+        .from('menfess')
+        .insert([
+          {
+            content: content.trim(),
+            category: category,
+            status: 'pending',
+            url_gambar: imageUrl,
+            image_upload_token: uploadToken,
+            song_id: selectedSong?.id ?? null,
+            song_title: selectedSong?.title ?? null,
+            song_artist: selectedSong?.artist ?? null,
+            song_album: selectedSong?.album ?? null,
+            song_cover: selectedSong?.cover ?? null,
+            song_preview: selectedSong?.preview ?? null,
+          },
+        ]);
+
+      if (error) throw error;
+
+      setSubmitted(true);
+    } catch (error) {
+      if (uploadToken) {
+        try {
+          await fetch('/api/cancel-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uploadToken }),
+          });
+        } catch (cleanupError) {
+          console.error('Gagal membersihkan gambar setelah submit gagal:', cleanupError);
+        }
+      }
+      console.error('Error submitting menfess:', error);
+      setImageError(error.message || 'Menfess gagal dikirim. Coba lagi.');
+    } finally {
+      setSubmitting(false);
+>>>>>>> Stashed changes
+    }
+=======
     setSubmitted(true);
+    setSubmitting(false);
+>>>>>>> Stashed changes
   };
 
   // =========================
@@ -434,8 +800,13 @@ function SubmitMenfess() {
 
     setCategory('');
     setContent('');
+    setImageFile(null);
+    setCropSource(null);
+    setImageError('');
     setSubmitted(false);
     setActiveTab('write');
+    setCroppedImage(null);
+    setImageError('');
 
     setMusicQuery('');
     setSongs([]);
@@ -643,6 +1014,12 @@ function SubmitMenfess() {
                         }`}
                       onClick={() => setActiveTab('write')}
                     >
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+                      {isSelected && (
+=======
+>>>>>>> image-fiture
                       Tulis
                     </button>
 
@@ -674,7 +1051,11 @@ function SubmitMenfess() {
                     />
                   ) : (
                     <div className="submit-editor__preview">
+<<<<<<< HEAD
                       {!content.trim() && !selectedSong ? (
+=======
+                      {!content.trim() && !selectedSong && !croppedImageUrl ? (
+>>>>>>> image-fiture
                         <div className="submit-editor__preview-empty">
                           <svg
                             width="32"
@@ -686,8 +1067,13 @@ function SubmitMenfess() {
                             <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
                           </svg>
                           <span className="submit-editor__preview-placeholder">
+<<<<<<< HEAD
                             Tidak ada yang bisa dipratinjau. Tulis sesuatu di
                             tab Tulis atau lampirkan lagu terlebih dahulu.
+=======
+                            Tidak ada yang bisa dipratinjau. Tulis sesuatu,
+                            lampirkan gambar, atau pilih lagu terlebih dahulu.
+>>>>>>> image-fiture
                           </span>
                         </div>
                       ) : (
@@ -707,6 +1093,10 @@ function SubmitMenfess() {
                             song_album={selectedSong?.album}
                             song_cover={selectedSong?.cover}
                             song_preview={selectedSong?.preview}
+<<<<<<< HEAD
+=======
+                            url_gambar={croppedImageUrl}
+>>>>>>> image-fiture
                           />
                         </div>
                       )}
@@ -716,6 +1106,164 @@ function SubmitMenfess() {
                 </div>
               </div>
 
+<<<<<<< HEAD
+=======
+              <section className="submit-image-section" aria-labelledby="submit-image-title">
+                <div className="submit-image-section__heading">
+                  <h2 id="submit-image-title">Tambahkan gambar</h2>
+                  <span>(Opsional)</span>
+                </div>
+                <p className="submit-image-section__hint">
+                  Gambar saja, maksimal 30 MB. Kamu akan memotongnya menjadi persegi sebelum dikirim.
+                </p>
+                {imageFile ? (
+                  <div className="submit-image-preview">
+                    <img src={imagePreviewUrl} alt="Pratinjau gambar yang sudah dipotong" />
+                    <div className="submit-image-preview__actions">
+                      <span>Siap dikirim · JPG</span>
+                      <button type="button" className="gh-btn gh-btn-sm" onClick={() => setCropSource(imageFile)}>
+                        Potong ulang
+                      </button>
+                      <button type="button" className="gh-btn gh-btn-sm gh-btn-danger" onClick={() => setImageFile(null)}>
+                        Hapus gambar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="gh-btn submit-image-picker">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      onChange={handleImageSelect}
+                      aria-label="Pilih gambar untuk menfess"
+                    />
+                    Pilih gambar
+                  </label>
+                )}
+                {imageError && <p className="submit-image-error" role="alert">{imageError}</p>}
+              </section>
+
+
+              <div className="submit-image-section">
+                <div className="submit-image-section__header">
+                  <div className="submit-image-section__title-wrap">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M1.75 2A1.75 1.75 0 0 0 0 3.75v8.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-8.5A1.75 1.75 0 0 0 14.25 2Zm0 1.5h12.5a.25.25 0 0 1 .25.25v5.69l-2.72-2.72a1.75 1.75 0 0 0-2.475 0l-4.22 4.22-1.22-1.22a1.75 1.75 0 0 0-2.475 0L1.5 10.63V3.75a.25.25 0 0 1 .25-.25Zm0 9 .7-.7a.25.25 0 0 1 .354 0l1.75 1.75a.75.75 0 0 0 1.06 0l4.75-4.75a.25.25 0 0 1 .354 0L14.5 11.1v1.15a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25Zm3.5-7.25a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Z" />
+                    </svg>
+                    <span className="submit-image-section__title">Tambahkan Gambar</span>
+                    <span className="submit-image-section__optional">(Opsional)</span>
+                  </div>
+                  <span className="submit-image-section__hint">Maks. 30 MB · JPG, PNG, WebP · rasio 1:1</span>
+                </div>
+
+                <input
+                  ref={imageInputRef}
+                  className="submit-image-section__input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageSelection}
+                  aria-label="Pilih gambar"
+                />
+
+                {croppedImageUrl ? (
+                  <div className="submit-image-preview">
+                    <img src={croppedImageUrl} alt="Pratinjau gambar yang akan diunggah" />
+                    <div className="submit-image-preview__actions">
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn-sm"
+                        onClick={() => imageInputRef.current?.click()}
+                      >
+                        Ganti Gambar
+                      </button>
+                      <button
+                        type="button"
+                        className="gh-btn gh-btn-sm gh-btn-danger"
+                        onClick={handleRemoveImage}
+                        aria-label="Hapus gambar terpilih"
+                        title="Hapus gambar terpilih"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                          <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.75.75 0 0 0 .746.675h4.196a.75.75 0 0 0 .746-.675l.66-6.6a.75.75 0 0 0-1.492-.15l-.615 6.15H6.603l-.615-6.15a.75.75 0 0 0-1.492.15Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="gh-btn submit-image-section__choose"
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M1.75 2A1.75 1.75 0 0 0 0 3.75v8.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-8.5A1.75 1.75 0 0 0 14.25 2Zm0 1.5h12.5a.25.25 0 0 1 .25.25v5.69l-2.72-2.72a1.75 1.75 0 0 0-2.475 0l-4.22 4.22-1.22-1.22a1.75 1.75 0 0 0-2.475 0L1.5 10.63V3.75a.25.25 0 0 1 .25-.25Zm0 9 .7-.7a.25.25 0 0 1 .354 0l1.75 1.75a.75.75 0 0 0 1.06 0l4.75-4.75a.25.25 0 0 1 .354 0L14.5 11.1v1.15a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25Zm3.5-7.25a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Z" />
+                    </svg>
+                    Pilih Gambar
+                  </button>
+                )}
+
+                {imageError && <p className="submit-image-section__error" role="alert">{imageError}</p>}
+              </div>
+
+              {cropOpen && imageSource && (
+                <div className="image-crop-modal" role="dialog" aria-modal="true" aria-labelledby="image-crop-title">
+                  <div className="image-crop-modal__panel">
+                    <div className="image-crop-modal__header">
+                      <h2 id="image-crop-title">Potong Gambar</h2>
+                      <button type="button" className="gh-btn gh-btn-sm" onClick={handleCancelCrop}>Batal</button>
+                    </div>
+                    <p className="image-crop-modal__hint">Geser gambar untuk mengatur posisi. Area potong berbentuk persegi.</p>
+                    <div
+                      ref={cropViewportRef}
+                      className="image-crop-stage"
+                      onPointerDown={handleCropPointerDown}
+                      onPointerMove={handleCropPointerMove}
+                      onPointerUp={handleCropPointerUp}
+                      onPointerCancel={handleCropPointerUp}
+                    >
+                      <img
+                        ref={cropImageRef}
+                        src={imageSource}
+                        alt="Gambar untuk dipotong"
+                        draggable="false"
+                        onLoad={() => setCropImageLoaded(true)}
+                        style={cropImageLoaded && cropImageRef.current && cropViewportSize ? {
+                          width: getImageDimensions(cropImageRef.current, cropViewportSize, cropZoom).width,
+                          height: getImageDimensions(cropImageRef.current, cropViewportSize, cropZoom).height,
+                          transform: `translate(calc(-50% + ${cropPosition.x}px), calc(-50% + ${cropPosition.y}px))`,
+                        } : undefined}
+                      />
+                    </div>
+                    <label className="image-crop-zoom">
+                      <span>Perbesar</span>
+                      <input
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="0.01"
+                        value={cropZoom}
+                        onChange={(event) => {
+                          const zoom = Number(event.target.value);
+                          setCropZoom(zoom);
+                          setCropPosition((position) => constrainCropPosition(
+                            position,
+                            cropImageRef.current,
+                            cropViewportSize,
+                            zoom
+                          ));
+                        }}
+                        aria-label="Perbesar gambar"
+                      />
+                    </label>
+                    <div className="image-crop-modal__actions">
+                      <button type="button" className="gh-btn" onClick={handleCancelCrop}>Batal</button>
+                      <button type="button" className="gh-btn gh-btn-primary" onClick={handleConfirmCrop}>Gunakan Gambar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+>>>>>>> image-fiture
 
               {/* MUSIC SECTION */}
               <div className="submit-music-section">
@@ -748,6 +1296,10 @@ function SubmitMenfess() {
                   <div className="submit-music-selected">
                     <div className="submit-music-selected__header">
                       <span className="submit-music-selected__badge">
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
+>>>>>>> image-fiture
                         <svg
                           width="12"
                           height="12"
@@ -1014,6 +1566,15 @@ function SubmitMenfess() {
                     className={`submit-form-box__counter ${isOverLimit
                       ? 'submit-form-box__counter--over'
                       : ''
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+                    }`}
+                >
+                  {charCount} / {MAX_CHARS} karakter
+                </span>
+=======
+>>>>>>> image-fiture
                       }`}
                   >
                     {charCount} / {MAX_CHARS} karakter
@@ -1030,12 +1591,22 @@ function SubmitMenfess() {
                   <button
                     type="submit"
                     className="gh-btn gh-btn-primary"
+<<<<<<< HEAD
                     disabled={!isValid}
                   >
                     {'Kirim Menfess'}
                   </button>
 
                 </div>
+=======
+                    disabled={!isValid || cropOpen}
+                  >
+                    {submitting ? 'Mengirim...' : 'Kirim Menfess'}
+                  </button>
+
+                </div>
+>>>>>>> Stashed changes
+>>>>>>> image-fiture
 
               </div>
 
