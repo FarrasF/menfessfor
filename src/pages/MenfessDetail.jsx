@@ -484,6 +484,15 @@ function MenfessDetail() {
                   {menfess.content}
                 </p>
 
+                {menfess.url_gambar && (
+                  <img
+                    src={menfess.url_gambar}
+                    alt="Gambar pada menfess"
+                    className="menfess-detail-image"
+                    loading="lazy"
+                  />
+                )}
+
                 {(menfess.song_title || menfess.song_id) && (
                   <>
                     {musicLoading ? (

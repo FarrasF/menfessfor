@@ -663,6 +663,35 @@
   gap: 8px;
 }
 
+.admin-queue-image {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-queue-image > img {
+  width: min(100%, 280px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas-subtle);
+}
+
+.admin-image-delete-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--color-danger-subtle);
+  border: 1px solid var(--color-label-confess-border);
+  border-radius: var(--radius-md);
+  color: var(--color-danger-fg);
+  font-size: var(--text-xs);
+}
+
 @media (max-width: 640px) {
   .admin-report-card,
   .admin-queue-item {
