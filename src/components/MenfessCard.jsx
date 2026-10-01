@@ -300,10 +300,16 @@ function MenfessCard({
         {url_gambar && (
           <img
             src={url_gambar}
+<<<<<<< Updated upstream
             alt="Gambar pada menfess"
             className="gh-card__image"
             loading="lazy"
             draggable={false}
+=======
+            alt="Gambar lampiran menfess"
+            className="gh-card__image"
+            loading="lazy"
+>>>>>>> Stashed changes
           />
         )}
 

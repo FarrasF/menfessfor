@@ -487,9 +487,14 @@ function MenfessDetail() {
                 {menfess.url_gambar && (
                   <img
                     src={menfess.url_gambar}
+<<<<<<< Updated upstream
                     alt="Gambar pada menfess"
                     className="menfess-detail-image"
                     loading="lazy"
+=======
+                    alt="Gambar lampiran menfess"
+                    className="menfess-image"
+>>>>>>> Stashed changes
                   />
                 )}
 

@@ -4,9 +4,11 @@ import MenfessCard from '../components/MenfessCard';
 import { CATEGORIES } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
 import { searchMusic, getMusicById } from '../lib/music';
+import ImageCropper from '../components/ImageCropper';
 import './SubmitMenfess.css';
 
 const MAX_CHARS = 500;
+<<<<<<< Updated upstream
 const MAX_IMAGE_SIZE = 30 * 1024 * 1024;
 const MAX_CROPPED_IMAGE_SIZE = 3.5 * 1024 * 1024;
 
@@ -75,6 +77,18 @@ async function createCroppedImage(imageSource, cropPosition, zoom, viewportSize)
   }
 
   throw new Error('Ukuran hasil crop terlalu besar. Coba crop bagian yang lebih kecil.');
+=======
+const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Gambar gagal dibaca.'));
+    reader.readAsDataURL(file);
+  });
+>>>>>>> Stashed changes
 }
 
 function getCategoryLabelClass(category) {
@@ -287,6 +301,7 @@ function SubmitMenfess() {
   const [content, setContent] = useState('');
   const [activeTab, setActiveTab] = useState('write');
   const [submitted, setSubmitted] = useState(false);
+<<<<<<< Updated upstream
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [imageSource, setImageSource] = useState('');
   const [croppedImage, setCroppedImage] = useState(null);
@@ -302,6 +317,14 @@ function SubmitMenfess() {
   const cropImageRef = useRef(null);
   const cropDragRef = useRef(null);
   const imageInputRef = useRef(null);
+=======
+  const [cropSource, setCropSource] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [imageError, setImageError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+>>>>>>> Stashed changes
 
   // Music
   const [musicQuery, setMusicQuery] = useState('');
@@ -318,6 +341,17 @@ function SubmitMenfess() {
 
   // Audio preview for attached song
   const currentAudioRef = useRef(null);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreviewUrl('');
+      return undefined;
+    }
+
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [imageFile]);
 
   useEffect(() => {
     document.title = 'Menfess Baru · menfessfor';
@@ -374,6 +408,7 @@ function SubmitMenfess() {
     !isOverLimit &&
     !submitting;
 
+<<<<<<< Updated upstream
   const handleImageSelection = (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -385,10 +420,24 @@ function SubmitMenfess() {
     }
 
     if (file.size > MAX_IMAGE_SIZE) {
+=======
+  const handleImageSelect = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    setImageError('');
+
+    if (!file) return;
+    if (!IMAGE_TYPES.includes(file.type)) {
+      setImageError('Pilih file gambar JPG, PNG, WebP, GIF, atau AVIF. Video tidak didukung.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+>>>>>>> Stashed changes
       setImageError('Ukuran gambar maksimal 30 MB.');
       return;
     }
 
+<<<<<<< Updated upstream
     setImageError('');
     setCropPosition({ x: 0, y: 0 });
     setCropZoom(1);
@@ -453,6 +502,14 @@ function SubmitMenfess() {
 
   const handleRemoveImage = () => {
     setCroppedImage(null);
+=======
+    setCropSource(file);
+  };
+
+  const handleCropApply = (file) => {
+    setImageFile(file);
+    setCropSource(null);
+>>>>>>> Stashed changes
     setImageError('');
   };
 
@@ -592,11 +649,52 @@ function SubmitMenfess() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isValid) return;
+    if (!isValid || submitting) return;
+
+    setSubmitting(true);
+
+    const menfessData = {
+      content: content.trim(),
+      category,
+      status: 'pending',
+      song_id: selectedSong?.id ?? null,
+      song_title: selectedSong?.title ?? null,
+      song_artist: selectedSong?.artist ?? null,
+      song_album: selectedSong?.album ?? null,
+      song_cover: selectedSong?.cover ?? null,
+      song_preview: selectedSong?.preview ?? null,
+    };
+
+    if (imageFile) {
+      try {
+        const response = await fetch('/api/submit-menfess', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...menfessData,
+            image: await fileToDataUrl(imageFile),
+          }),
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Menfess bergambar gagal dikirim.');
+        }
+
+        setSubmitted(true);
+      } catch (error) {
+        console.error('Error submitting menfess image:', error);
+        alert(error.message || 'Menfess gagal dikirim. Coba lagi.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
 
 <<<<<<< Updated upstream
     const { error } = await supabase
       .from('menfess')
+<<<<<<< Updated upstream
       .insert([
         {
           content: content.trim(),
@@ -611,16 +709,21 @@ function SubmitMenfess() {
           song_preview: selectedSong?.preview ?? null,
         },
       ]);
+=======
+      .insert([menfessData]);
+>>>>>>> Stashed changes
 
     if (error) {
       console.error('Gagal mengirim menfess:', error);
       alert('Menfess gagal dikirim. Coba lagi.');
+      setSubmitting(false);
       return;
 =======
     setSubmitting(true);
     setImageError('');
     let uploadToken = null;
 
+<<<<<<< Updated upstream
     try {
       let imageUrl = null;
 
@@ -679,6 +782,10 @@ function SubmitMenfess() {
       setSubmitting(false);
 >>>>>>> Stashed changes
     }
+=======
+    setSubmitted(true);
+    setSubmitting(false);
+>>>>>>> Stashed changes
   };
 
   // =========================
@@ -693,6 +800,9 @@ function SubmitMenfess() {
 
     setCategory('');
     setContent('');
+    setImageFile(null);
+    setCropSource(null);
+    setImageError('');
     setSubmitted(false);
     setActiveTab('write');
     setCroppedImage(null);
@@ -946,6 +1056,41 @@ function SubmitMenfess() {
 
                 </div>
               </div>
+
+              <section className="submit-image-section" aria-labelledby="submit-image-title">
+                <div className="submit-image-section__heading">
+                  <h2 id="submit-image-title">Tambahkan gambar</h2>
+                  <span>(Opsional)</span>
+                </div>
+                <p className="submit-image-section__hint">
+                  Gambar saja, maksimal 30 MB. Kamu akan memotongnya menjadi persegi sebelum dikirim.
+                </p>
+                {imageFile ? (
+                  <div className="submit-image-preview">
+                    <img src={imagePreviewUrl} alt="Pratinjau gambar yang sudah dipotong" />
+                    <div className="submit-image-preview__actions">
+                      <span>Siap dikirim · JPG</span>
+                      <button type="button" className="gh-btn gh-btn-sm" onClick={() => setCropSource(imageFile)}>
+                        Potong ulang
+                      </button>
+                      <button type="button" className="gh-btn gh-btn-sm gh-btn-danger" onClick={() => setImageFile(null)}>
+                        Hapus gambar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="gh-btn submit-image-picker">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      onChange={handleImageSelect}
+                      aria-label="Pilih gambar untuk menfess"
+                    />
+                    Pilih gambar
+                  </label>
+                )}
+                {imageError && <p className="submit-image-error" role="alert">{imageError}</p>}
+              </section>
 
 
               <div className="submit-image-section">

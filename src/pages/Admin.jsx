@@ -107,7 +107,11 @@ function Admin() {
   const [approvedMenfess, setApprovedMenfess] = useState([]);
   const [approvedLoading, setApprovedLoading] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+<<<<<<< Updated upstream
   const [deletingImageId, setDeletingImageId] = useState(null);
+=======
+  const [imageDeletingId, setImageDeletingId] = useState(null);
+>>>>>>> Stashed changes
 
   useEffect(() => {
     checkAdmin();
@@ -317,11 +321,19 @@ function Admin() {
     }
   }
 
+<<<<<<< Updated upstream
   async function deletePendingImage(item) {
     setDeletingImageId(item.id);
 
     try {
       const response = await fetch('/api/delete-image', {
+=======
+  async function deleteMenfessImage(item) {
+    setImageDeletingId(item.id);
+
+    try {
+      const response = await fetch('/api/delete-menfess-image', {
+>>>>>>> Stashed changes
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -331,21 +343,39 @@ function Admin() {
       });
       const result = await response.json();
 
+<<<<<<< Updated upstream
       if (!response.ok) {
         throw new Error(result.error || 'Gambar gagal dihapus.');
       }
+=======
+      if (!response.ok) throw new Error(result.error || 'Gambar gagal dihapus.');
+>>>>>>> Stashed changes
 
       setMenfess((current) => current.map((menfessItem) => (
         menfessItem.id === item.id
           ? { ...menfessItem, url_gambar: null }
           : menfessItem
       )));
+<<<<<<< Updated upstream
       setDeleteConfirmation(null);
     } catch (error) {
       console.error('Gagal menghapus gambar ImgBB:', error);
       alert(error.message || 'Gambar gagal dihapus.');
     } finally {
       setDeletingImageId(null);
+=======
+      setApprovedMenfess((current) => current.map((menfessItem) => (
+        menfessItem.id === item.id
+          ? { ...menfessItem, url_gambar: null }
+          : menfessItem
+      )));
+      setDeleteConfirmation(null);
+    } catch (deleteError) {
+      console.error('Gagal menghapus gambar menfess:', deleteError);
+      alert(deleteError.message || 'Gambar gagal dihapus.');
+    } finally {
+      setImageDeletingId(null);
+>>>>>>> Stashed changes
     }
   }
 
@@ -586,6 +616,7 @@ function Admin() {
                     </div>
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
                     {item.url_gambar && (
                       <div className="admin-queue-image">
@@ -624,6 +655,14 @@ function Admin() {
                           </button>
                         )}
                       </div>
+=======
+                    {item.url_gambar && (
+                      <img
+                        src={item.url_gambar}
+                        alt={`Gambar lampiran menfess #${item.id}`}
+                        className="admin-queue-item__image"
+                      />
+>>>>>>> Stashed changes
                     )}
 
                     {Boolean(item.song_title || item.song_id || item.song_preview) && (
@@ -639,6 +678,37 @@ function Admin() {
 
 >>>>>>> Stashed changes
                     <div className="admin-queue-item__actions">
+                      {item.url_gambar && (deleteConfirmation === `image-${item.id}` ? (
+                        <div className="admin-image-delete-confirm">
+                          <span>Hapus gambar ini dari ImgBB?</span>
+                          <button
+                            className="gh-btn gh-btn-sm gh-btn-danger"
+                            type="button"
+                            disabled={imageDeletingId === item.id}
+                            onClick={() => deleteMenfessImage(item)}
+                          >
+                            {imageDeletingId === item.id ? 'Menghapus...' : 'Ya, Hapus Gambar'}
+                          </button>
+                          <button
+                            className="gh-btn gh-btn-sm"
+                            type="button"
+                            onClick={() => setDeleteConfirmation(null)}
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="gh-btn gh-btn-sm gh-btn-danger"
+                          type="button"
+                          onClick={() => setDeleteConfirmation(`image-${item.id}`)}
+                        >
+                          <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.75.75 0 0 0 .746.675h4.196a.75.75 0 0 0 .746-.675l.66-6.6a.75.75 0 0 0-1.492-.15l-.615 6.15H6.603l-.615-6.15a.75.75 0 0 0-1.492.15Z" />
+                          </svg>
+                          Hapus Gambar
+                        </button>
+                      ))}
                       <button
                         className="gh-btn gh-btn-sm gh-btn-primary"
                         type="button"
