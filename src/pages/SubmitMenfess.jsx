@@ -4,13 +4,11 @@ import MenfessCard from '../components/MenfessCard';
 import { CATEGORIES } from '../data/dummyData';
 import { supabase } from '../lib/supabase';
 import { searchMusic, getMusicById } from '../lib/music';
-import ImageCropper from '../components/ImageCropper';
 import './SubmitMenfess.css';
 
 const MAX_CHARS = 500;
-<<<<<<< Updated upstream
 const MAX_IMAGE_SIZE = 30 * 1024 * 1024;
-const MAX_CROPPED_IMAGE_SIZE = 3.5 * 1024 * 1024;
+const MAX_CROPPED_IMAGE_SIZE = 2.2 * 1024 * 1024;
 
 function getImageDimensions(image, viewportSize, zoom) {
   const scale = Math.max(
@@ -77,9 +75,7 @@ async function createCroppedImage(imageSource, cropPosition, zoom, viewportSize)
   }
 
   throw new Error('Ukuran hasil crop terlalu besar. Coba crop bagian yang lebih kecil.');
-=======
-const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+}
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -88,7 +84,6 @@ function fileToDataUrl(file) {
     reader.onerror = () => reject(new Error('Gambar gagal dibaca.'));
     reader.readAsDataURL(file);
   });
->>>>>>> Stashed changes
 }
 
 function getCategoryLabelClass(category) {
@@ -301,7 +296,6 @@ function SubmitMenfess() {
   const [content, setContent] = useState('');
   const [activeTab, setActiveTab] = useState('write');
   const [submitted, setSubmitted] = useState(false);
-<<<<<<< Updated upstream
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [imageSource, setImageSource] = useState('');
   const [croppedImage, setCroppedImage] = useState(null);
@@ -317,14 +311,6 @@ function SubmitMenfess() {
   const cropImageRef = useRef(null);
   const cropDragRef = useRef(null);
   const imageInputRef = useRef(null);
-=======
-  const [cropSource, setCropSource] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
-  const [imageError, setImageError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
->>>>>>> Stashed changes
 
 
   // Music
@@ -342,17 +328,6 @@ function SubmitMenfess() {
 
   // Audio preview for attached song
   const currentAudioRef = useRef(null);
-
-  useEffect(() => {
-    if (!imageFile) {
-      setImagePreviewUrl('');
-      return undefined;
-    }
-
-    const previewUrl = URL.createObjectURL(imageFile);
-    setImagePreviewUrl(previewUrl);
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [imageFile]);
 
   useEffect(() => {
     document.title = 'Menfess Baru · menfessfor';
@@ -409,36 +384,21 @@ function SubmitMenfess() {
     !isOverLimit &&
     !submitting;
 
-<<<<<<< Updated upstream
   const handleImageSelection = (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setImageError('Pilih gambar JPG, PNG, atau WebP. Video dan format lain tidak didukung.');
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'].includes(file.type)) {
+      setImageError('Pilih gambar JPG, PNG, WebP, GIF, atau AVIF. Video tidak didukung.');
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE) {
-=======
-  const handleImageSelect = (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    setImageError('');
-
-    if (!file) return;
-    if (!IMAGE_TYPES.includes(file.type)) {
-      setImageError('Pilih file gambar JPG, PNG, WebP, GIF, atau AVIF. Video tidak didukung.');
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
->>>>>>> Stashed changes
       setImageError('Ukuran gambar maksimal 30 MB.');
       return;
     }
 
-<<<<<<< Updated upstream
     setImageError('');
     setCropPosition({ x: 0, y: 0 });
     setCropZoom(1);
@@ -503,14 +463,6 @@ function SubmitMenfess() {
 
   const handleRemoveImage = () => {
     setCroppedImage(null);
-=======
-    setCropSource(file);
-  };
-
-  const handleCropApply = (file) => {
-    setImageFile(file);
-    setCropSource(null);
->>>>>>> Stashed changes
     setImageError('');
   };
 
@@ -666,14 +618,16 @@ function SubmitMenfess() {
       song_preview: selectedSong?.preview ?? null,
     };
 
-    if (imageFile) {
-      try {
+    setImageError('');
+
+    try {
+      if (croppedImage) {
         const response = await fetch('/api/submit-menfess', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...menfessData,
-            image: await fileToDataUrl(imageFile),
+            image: await fileToDataUrl(croppedImage),
           }),
         });
         const result = await response.json();
@@ -681,111 +635,21 @@ function SubmitMenfess() {
         if (!response.ok) {
           throw new Error(result.error || 'Menfess bergambar gagal dikirim.');
         }
+      } else {
+        const { error } = await supabase
+          .from('menfess')
+          .insert([menfessData]);
 
-        setSubmitted(true);
-      } catch (error) {
-        console.error('Error submitting menfess image:', error);
-        alert(error.message || 'Menfess gagal dikirim. Coba lagi.');
-      } finally {
-        setSubmitting(false);
+        if (error) throw error;
       }
-      return;
-    }
-
-<<<<<<< Updated upstream
-    const { error } = await supabase
-      .from('menfess')
-<<<<<<< Updated upstream
-      .insert([
-        {
-          content: content.trim(),
-          category: category,
-          status: 'pending',
-          song_id: selectedSong?.id ?? null,
-          song_title: selectedSong?.title ?? null,
-          song_artist: selectedSong?.artist ?? null,
-          song_album: selectedSong?.album ?? null,
-          song_cover: selectedSong?.cover ?? null,
-          song_preview: selectedSong?.preview ?? null,
-        },
-      ]);
-=======
-      .insert([menfessData]);
->>>>>>> Stashed changes
-
-    if (error) {
-      console.error('Error submitting menfess:', error);
-      alert('Menfess gagal dikirim. Coba lagi.');
-      setSubmitting(false);
-      return;
-=======
-    setSubmitting(true);
-    setImageError('');
-    let uploadToken = null;
-
-<<<<<<< Updated upstream
-    try {
-      let imageUrl = null;
-
-      if (croppedImage) {
-        const uploadResponse = await fetch('/api/upload-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'image/jpeg' },
-          body: croppedImage,
-        });
-        const uploadResult = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-          throw new Error(uploadResult.error || 'Gambar gagal diunggah.');
-        }
-
-        imageUrl = uploadResult.imageUrl;
-        uploadToken = uploadResult.uploadToken;
-      }
-
-      const { error } = await supabase
-        .from('menfess')
-        .insert([
-          {
-            content: content.trim(),
-            category: category,
-            status: 'pending',
-            url_gambar: imageUrl,
-            image_upload_token: uploadToken,
-            song_id: selectedSong?.id ?? null,
-            song_title: selectedSong?.title ?? null,
-            song_artist: selectedSong?.artist ?? null,
-            song_album: selectedSong?.album ?? null,
-            song_cover: selectedSong?.cover ?? null,
-            song_preview: selectedSong?.preview ?? null,
-          },
-        ]);
-
-      if (error) throw error;
 
       setSubmitted(true);
     } catch (error) {
-      if (uploadToken) {
-        try {
-          await fetch('/api/cancel-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uploadToken }),
-          });
-        } catch (cleanupError) {
-          console.error('Gagal membersihkan gambar setelah submit gagal:', cleanupError);
-        }
-      }
       console.error('Error submitting menfess:', error);
       setImageError(error.message || 'Menfess gagal dikirim. Coba lagi.');
     } finally {
       setSubmitting(false);
->>>>>>> Stashed changes
     }
-=======
-    setSubmitted(true);
-    setSubmitting(false);
->>>>>>> Stashed changes
   };
 
   // =========================
@@ -800,8 +664,6 @@ function SubmitMenfess() {
 
     setCategory('');
     setContent('');
-    setImageFile(null);
-    setCropSource(null);
     setImageError('');
     setSubmitted(false);
     setActiveTab('write');
@@ -1014,12 +876,6 @@ function SubmitMenfess() {
                         }`}
                       onClick={() => setActiveTab('write')}
                     >
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-                      {isSelected && (
-=======
->>>>>>> image-fiture
                       Tulis
                     </button>
 
@@ -1051,11 +907,7 @@ function SubmitMenfess() {
                     />
                   ) : (
                     <div className="submit-editor__preview">
-<<<<<<< HEAD
-                      {!content.trim() && !selectedSong ? (
-=======
                       {!content.trim() && !selectedSong && !croppedImageUrl ? (
->>>>>>> image-fiture
                         <div className="submit-editor__preview-empty">
                           <svg
                             width="32"
@@ -1067,13 +919,8 @@ function SubmitMenfess() {
                             <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v9.5C0 13.216.784 14 1.75 14H3v1.543a1.457 1.457 0 0 0 2.487 1.03L8.06 14h6.19A1.75 1.75 0 0 0 16 12.25v-9.5A1.75 1.75 0 0 0 14.25 1H1.75ZM1.5 2.75a.25.25 0 0 1 .25-.25h12.5a.25.25 0 0 1 .25.25v9.5a.25.25 0 0 1-.25.25h-6.5a.75.75 0 0 0-.53.22L4.5 15.44v-2.19a.75.75 0 0 0-.75-.75h-2a.25.25 0 0 1-.25-.25v-9.5Z" />
                           </svg>
                           <span className="submit-editor__preview-placeholder">
-<<<<<<< HEAD
-                            Tidak ada yang bisa dipratinjau. Tulis sesuatu di
-                            tab Tulis atau lampirkan lagu terlebih dahulu.
-=======
                             Tidak ada yang bisa dipratinjau. Tulis sesuatu,
                             lampirkan gambar, atau pilih lagu terlebih dahulu.
->>>>>>> image-fiture
                           </span>
                         </div>
                       ) : (
@@ -1093,10 +940,7 @@ function SubmitMenfess() {
                             song_album={selectedSong?.album}
                             song_cover={selectedSong?.cover}
                             song_preview={selectedSong?.preview}
-<<<<<<< HEAD
-=======
                             url_gambar={croppedImageUrl}
->>>>>>> image-fiture
                           />
                         </div>
                       )}
@@ -1105,44 +949,6 @@ function SubmitMenfess() {
 
                 </div>
               </div>
-
-<<<<<<< HEAD
-=======
-              <section className="submit-image-section" aria-labelledby="submit-image-title">
-                <div className="submit-image-section__heading">
-                  <h2 id="submit-image-title">Tambahkan gambar</h2>
-                  <span>(Opsional)</span>
-                </div>
-                <p className="submit-image-section__hint">
-                  Gambar saja, maksimal 30 MB. Kamu akan memotongnya menjadi persegi sebelum dikirim.
-                </p>
-                {imageFile ? (
-                  <div className="submit-image-preview">
-                    <img src={imagePreviewUrl} alt="Pratinjau gambar yang sudah dipotong" />
-                    <div className="submit-image-preview__actions">
-                      <span>Siap dikirim · JPG</span>
-                      <button type="button" className="gh-btn gh-btn-sm" onClick={() => setCropSource(imageFile)}>
-                        Potong ulang
-                      </button>
-                      <button type="button" className="gh-btn gh-btn-sm gh-btn-danger" onClick={() => setImageFile(null)}>
-                        Hapus gambar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <label className="gh-btn submit-image-picker">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-                      onChange={handleImageSelect}
-                      aria-label="Pilih gambar untuk menfess"
-                    />
-                    Pilih gambar
-                  </label>
-                )}
-                {imageError && <p className="submit-image-error" role="alert">{imageError}</p>}
-              </section>
-
 
               <div className="submit-image-section">
                 <div className="submit-image-section__header">
@@ -1160,7 +966,7 @@ function SubmitMenfess() {
                   ref={imageInputRef}
                   className="submit-image-section__input"
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                   onChange={handleImageSelection}
                   aria-label="Pilih gambar"
                 />
@@ -1263,8 +1069,6 @@ function SubmitMenfess() {
                 </div>
               )}
 
->>>>>>> image-fiture
-
               {/* MUSIC SECTION */}
               <div className="submit-music-section">
                 <div className="submit-music-header">
@@ -1296,10 +1100,6 @@ function SubmitMenfess() {
                   <div className="submit-music-selected">
                     <div className="submit-music-selected__header">
                       <span className="submit-music-selected__badge">
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> image-fiture
                         <svg
                           width="12"
                           height="12"
@@ -1566,19 +1366,10 @@ function SubmitMenfess() {
                     className={`submit-form-box__counter ${isOverLimit
                       ? 'submit-form-box__counter--over'
                       : ''
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
                     }`}
                 >
                   {charCount} / {MAX_CHARS} karakter
                 </span>
-=======
->>>>>>> image-fiture
-                      }`}
-                  >
-                    {charCount} / {MAX_CHARS} karakter
-                  </span>
 
                 </div>
 
@@ -1591,22 +1382,12 @@ function SubmitMenfess() {
                   <button
                     type="submit"
                     className="gh-btn gh-btn-primary"
-<<<<<<< HEAD
-                    disabled={!isValid}
-                  >
-                    {'Kirim Menfess'}
-                  </button>
-
-                </div>
-=======
                     disabled={!isValid || cropOpen}
                   >
                     {submitting ? 'Mengirim...' : 'Kirim Menfess'}
                   </button>
 
                 </div>
->>>>>>> Stashed changes
->>>>>>> image-fiture
 
               </div>
 

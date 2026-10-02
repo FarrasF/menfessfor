@@ -45,10 +45,6 @@ function DetailMusicPlayer({ cover, title, artist, album, preview }) {
       onClick={togglePlay}
       title={isPlaying ? 'Klik untuk jeda musik' : 'Klik untuk putar preview musik'}
       role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
           togglePlay();
         }
       }}
@@ -487,14 +483,9 @@ function MenfessDetail() {
                 {menfess.url_gambar && (
                   <img
                     src={menfess.url_gambar}
-<<<<<<< Updated upstream
-                    alt="Gambar pada menfess"
-                    className="menfess-detail-image"
-                    loading="lazy"
-=======
                     alt="Gambar lampiran menfess"
                     className="menfess-image"
->>>>>>> Stashed changes
+                    loading="lazy"
                   />
                 )}
 

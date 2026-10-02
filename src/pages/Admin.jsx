@@ -119,11 +119,7 @@ function Admin() {
   const [approvedMenfess, setApprovedMenfess] = useState([]);
   const [approvedLoading, setApprovedLoading] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
-<<<<<<< Updated upstream
-  const [deletingImageId, setDeletingImageId] = useState(null);
-=======
   const [imageDeletingId, setImageDeletingId] = useState(null);
->>>>>>> Stashed changes
 
   useEffect(() => {
     checkAdmin();
@@ -415,19 +411,11 @@ function Admin() {
     }
   }
 
-<<<<<<< Updated upstream
-  async function deletePendingImage(item) {
-    setDeletingImageId(item.id);
-
-    try {
-      const response = await fetch('/api/delete-image', {
-=======
   async function deleteMenfessImage(item) {
     setImageDeletingId(item.id);
 
     try {
       const response = await fetch('/api/delete-menfess-image', {
->>>>>>> Stashed changes
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -437,27 +425,16 @@ function Admin() {
       });
       const result = await response.json();
 
-<<<<<<< Updated upstream
       if (!response.ok) {
         throw new Error(result.error || 'Gambar gagal dihapus.');
       }
-=======
-      if (!response.ok) throw new Error(result.error || 'Gambar gagal dihapus.');
->>>>>>> Stashed changes
 
       setMenfess((current) => current.map((menfessItem) => (
         menfessItem.id === item.id
           ? { ...menfessItem, url_gambar: null }
           : menfessItem
       )));
-<<<<<<< Updated upstream
       setDeleteConfirmation(null);
-    } catch (error) {
-      console.error('Gagal menghapus gambar ImgBB:', error);
-      alert(error.message || 'Gambar gagal dihapus.');
-    } finally {
-      setDeletingImageId(null);
-=======
       setApprovedMenfess((current) => current.map((menfessItem) => (
         menfessItem.id === item.id
           ? { ...menfessItem, url_gambar: null }
@@ -469,7 +446,6 @@ function Admin() {
       alert(deleteError.message || 'Gambar gagal dihapus.');
     } finally {
       setImageDeletingId(null);
->>>>>>> Stashed changes
     }
   }
 
@@ -718,59 +694,14 @@ function Admin() {
                       "{item.content}"
                     </div>
 
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-                    {item.url_gambar && (
-                      <div className="admin-queue-image">
-                        <img src={item.url_gambar} alt={`Gambar menfess #${item.id}`} />
-                        {deleteConfirmation === `image-${item.id}` ? (
-                          <div className="admin-image-delete-confirm">
-                            <span>Hapus permanen dari ImgBB?</span>
-                            <button
-                              className="gh-btn gh-btn-sm gh-btn-danger"
-                              type="button"
-                              onClick={() => deletePendingImage(item)}
-                              disabled={deletingImageId === item.id}
-                            >
-                              {deletingImageId === item.id ? 'Menghapus...' : 'Ya, Hapus'}
-                            </button>
-                            <button
-                              className="gh-btn gh-btn-sm"
-                              type="button"
-                              onClick={() => setDeleteConfirmation(null)}
-                              disabled={deletingImageId === item.id}
-                            >
-                              Batal
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            className="gh-btn gh-btn-sm gh-btn-danger"
-                            type="button"
-                            onClick={() => setDeleteConfirmation(`image-${item.id}`)}
-                            title="Hapus gambar dari ImgBB sebelum menyetujui menfess"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                              <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.75.75 0 0 0 .746.675h4.196a.75.75 0 0 0 .746-.675l.66-6.6a.75.75 0 0 0-1.492-.15l-.615 6.15H6.603l-.615-6.15a.75.75 0 0 0-1.492.15Z" />
-                            </svg>
-                            Hapus Gambar
-                          </button>
-                        )}
-                      </div>
-=======
                     {item.url_gambar && (
                       <img
                         src={item.url_gambar}
                         alt={`Gambar lampiran menfess #${item.id}`}
                         className="admin-queue-item__image"
                       />
->>>>>>> Stashed changes
                     )}
 
->>>>>>> image-fiture
                     {Boolean(item.song_title || item.song_id || item.song_preview) && (
                       <CardMusicPlayer
                         songId={item.song_id}
@@ -782,10 +713,6 @@ function Admin() {
                       />
                     )}
 
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> image-fiture
                     <div className="admin-queue-item__actions">
                       {item.url_gambar && (deleteConfirmation === `image-${item.id}` ? (
                         <div className="admin-image-delete-confirm">
@@ -822,7 +749,7 @@ function Admin() {
                         className="gh-btn gh-btn-sm gh-btn-primary"
                         type="button"
                         onClick={() => updateStatus(item.id, 'approved')}
-                        disabled={deletingImageId === item.id}
+                        disabled={imageDeletingId === item.id}
                       >
                         <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
                           <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
@@ -834,7 +761,7 @@ function Admin() {
                         className="gh-btn gh-btn-sm gh-btn-danger"
                         type="button"
                         onClick={() => updateStatus(item.id, 'rejected')}
-                        disabled={deletingImageId === item.id}
+                        disabled={imageDeletingId === item.id}
                       >
                         <svg aria-hidden="true" height="14" viewBox="0 0 16 16" fill="currentColor">
                           <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path>

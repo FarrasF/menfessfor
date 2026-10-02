@@ -268,10 +268,6 @@
   overflow-wrap: anywhere;
 }
 
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
 .admin-queue-item__image {
   width: min(100%, 280px);
   aspect-ratio: 1;
@@ -290,16 +286,11 @@
   font-size: var(--text-xs);
 }
 
->>>>>>> image-fiture
 .admin-queue-item .gh-card__music {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> image-fiture
 .admin-queue-item__actions {
   display: flex;
   align-items: center;
